@@ -11,13 +11,12 @@
 #include <sdkhooks>
 #include <n_arms_fix>
 
-#include "nc_callbacks.sp"
-#include "nc_functions.sp"
-#include "nc_client.sp"
-#include "nc_globals.sp"
-#include "nc_hooks.sp"
-#include "nc_events.sp"
-#include "nc_downloads.sp"
+#include "NightCrawler/nc_callbacks.sp"
+#include "NightCrawler/nc_functions.sp"
+#include "NightCrawler/nc_client.sp"
+#include "NightCrawler/nc_hooks.sp"
+#include "NightCrawler/nc_events.sp"
+#include "NightCrawler/nc_downloads.sp"
 
 #pragma newdecls required
 
@@ -43,21 +42,14 @@ public void OnPluginStart()
 	}
 	
 	HookEvent("round_prestart", Event_OnRoundPreStart);
-	//HookEvent("round_start", Event_OnRoundStart);
 	HookEvent("round_end", Event_OnRoundEnd);
 	HookEvent("player_spawn", Event_OnPlayerSpawn);
 	HookEvent("player_death", Event_OnPlayerDeath);
-	//HookEvent("player_team", Event_OnPlayerPreTeam, EventHookMode_Pre);
-	//HookEvent("player_hurt", Event_OnPlayerHurt);
 
 	AddCommandListener(Command_LookAtWeapon, "+lookatweapon");
 	AddCommandListener(Command_Kill, "kill");
 	AddCommandListener(Command_Kill, "explode");
 	AddCommandListener(Command_Join, "jointeam");
-	for(int i; i < sizeof(g_sRadioCommands); i++)
-	{
-		AddCommandListener(Command_BlockRadio, g_sRadioCommands[i]);
-	}
 	AddNormalSoundHook(OnNormalSoundPlayed);
 }
 
