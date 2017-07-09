@@ -1,0 +1,19 @@
+"VertexLitGeneric"
+{	
+	"$baseTexture" "models/player/kuristaja/vader/t_hero_jedi_darthvader_glove_c"
+	"$bumpmap" "models/player/kuristaja//vader/t_hero_jedi_darthvader_glove_normal"
+
+	$color2						"[0.55 0.55 0.55]"	
+
+	"$halflambert" 	"1"
+
+	"$phong" "1"
+	"$phongexponent" "30"
+	"$phongboost" ".01"
+	"$phongfresnelranges"	"[5 6 8]"
+	"$PhongAlbedoTint" "1"
+
+	"$rimlight"               "1"
+	"$rimlightexponent"       "5"
+	"$rimlightboost"          ".2"
+}

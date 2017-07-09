@@ -1,0 +1,8 @@
+"VertexLitGeneric"
+{	
+	"$baseTexture" "models/player/kuristaja/vader/t_hero_jedi_darthvader_cape_c"
+	"$bumpmap" "models/player/kuristaja/vader/t_hero_jedi_darthvader_cape_normal"
+
+	//$nocull 1
+	//$no_draw 1	
+}

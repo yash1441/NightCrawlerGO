@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{	
+	// ENV
+
+	"$basetexture" "models/player/kuristaja/vader/black"
+	"$bumpmap" "models/player/kuristaja/vader/t_hero_jedi_darthvader_body2_normal"
+
+	"$additive" 1
+
+	"$envmap" "env_cubemap"
+	"$normalmapalphaenvmapmask" 1
+	"$envmaptint" "[.25 .25 .25]" 
+	"$envmapcontrast" 1
+	"$envmapsaturation" .4	
+}
