@@ -1,2 +1,0 @@
-char g_sRadioCommands[][] = {"coverme", "takepoint", "holdpos", "regroup", "followme", "takingfire", "go", "fallback", "sticktog", "getinpos", "stormfront", "report", "roger", "enemyspot", "needbackup", "sectorclear",
-"inposition", "reportingin", "getout", "negative","enemydown", "compliment", "thanks", "cheer"};
