@@ -50,10 +50,6 @@ public void OnPluginStart()
 	AddCommandListener(Command_Kill, "kill");
 	AddCommandListener(Command_Kill, "explode");
 	AddCommandListener(Command_Join, "jointeam");
-	for(int i; i < sizeof(g_sRadioCommands); i++)
-	{
-		AddCommandListener(Command_BlockRadio, g_sRadioCommands[i]);
-	}
 	AddNormalSoundHook(OnNormalSoundPlayed);
 }
 
@@ -65,25 +61,24 @@ public void OnMapStart()
 	SetCvarInt("sv_disable_immunity_alpha", 1);
 	SetCvarInt("sv_airaccelerate", 120);
 	SetCvarInt("mp_maxrounds", 30);
-	SetCvarInt("mp_startmoney", 0);
-	SetCvarInt("mp_playercashawards", 1);
 	SetCvarFloat("mp_roundtime", 2.5);
 	SetCvarFloat("mp_roundtime_defuse", 2.5);
-	SetCvarInt("mp_playercashawards", 1);
-	SetCvarInt("mp_teamcashawards", 0);
 	SetCvarInt("mp_defuser_allocation", 0);
 	SetCvarInt("mp_solid_teammates", 0);
 	SetCvarInt("sv_deadtalk", 0);
 	SetCvarInt("mp_autokick", 0);
 	SetCvarInt("mp_free_armor", 0);
 	SetCvarInt("mp_buytime", 0);
-	//Precache Models/Sounds/Materials
-	for(int i; i < sizeof(g_sRadioCommands); i++)
+	for(int i; i < sizeof(NC_Models); i++)
 	{
 		PrecacheModel(NC_Models[i]);
 		AddFileToDownloadsTable(NC_Models[i]);
+	}
+	for(int i; i < sizeof(NC_Material); i++)
+	{
 		AddFileToDownloadsTable(NC_Materials[i]);
 	}
+
 }
 
 public void OnClientPutInServer(int client)
