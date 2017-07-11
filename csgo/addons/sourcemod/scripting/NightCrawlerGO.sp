@@ -11,16 +11,18 @@
 #include <sdkhooks>
 #include <n_arms_fix>
 
-#include "NightCrawler/nc_callbacks.sp"
-#include "NightCrawler/nc_functions.sp"
+#include "NightCrawler/nc_globals.sp"
 #include "NightCrawler/nc_client.sp"
+#include "NightCrawler/nc_functions.sp"
+#include "NightCrawler/nc_callbacks.sp"
 #include "NightCrawler/nc_hooks.sp"
 #include "NightCrawler/nc_events.sp"
 #include "NightCrawler/nc_downloads.sp"
 
+
 #pragma newdecls required
 
-int NC_TeleCount[MAXPLAYERS + 1];
+
 
 EngineVersion g_Game;
 
@@ -74,7 +76,7 @@ public void OnMapStart()
 		PrecacheModel(NC_Models[i]);
 		AddFileToDownloadsTable(NC_Models[i]);
 	}
-	for(int i; i < sizeof(NC_Material); i++)
+	for(int i; i < sizeof(NC_Materials); i++)
 	{
 		AddFileToDownloadsTable(NC_Materials[i]);
 	}
