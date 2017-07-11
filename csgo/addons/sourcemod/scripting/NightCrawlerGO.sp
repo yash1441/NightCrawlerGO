@@ -89,11 +89,9 @@ public void OnClientPutInServer(int client)
 	{
 		SendConVarValue(client, FindConVar("sv_footsteps"), "0");
 		SDKHook(client, SDKHook_PreThink, EventSDK_OnClientThink);
-		//SDKHook(client, SDKHook_PostThinkPost, EventSDK_OnPostThinkPost);
 		SDKHook(client, SDKHook_WeaponCanUse, EventSDK_OnWeaponCanUse);
 		SDKHook(client, SDKHook_SetTransmit, EventSDK_SetTransmit);
 		SDKHook(client, SDKHook_OnTakeDamage, EventSDK_OnTakeDamage);
-		//SDKHook(client, SDKHook_TraceAttack, EventSDK_OnTraceAttack);*/
 	}
 }
 
