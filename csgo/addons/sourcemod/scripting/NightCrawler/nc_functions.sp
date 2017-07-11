@@ -155,7 +155,7 @@ NCArms(client)
 {
 	if(!IsPlayerAlive(client)) return;
 	if(GetClientTeam(client) == CS_TEAM_CT)
-		ArmsFix_SetDefaults(client)
+		ArmsFix_SetDefaults(client);
 	else if (GetClientTeam(client) == CS_TEAM_T)
 		SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/vader/vader_arms.mdl");
 }

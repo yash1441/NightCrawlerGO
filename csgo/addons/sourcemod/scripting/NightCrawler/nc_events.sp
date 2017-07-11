@@ -1,17 +1,23 @@
 public Action Event_OnRoundPreStart(Event event, const char[] name, bool dontBroadcast)
 {
-	//Put people in teams according to ratio using GetRandomPlayer(team)
-	CS_SwitchTeam(GetRandomPlayer(CS_TEAM_CT), CS_TEAM_T);
+	int TotalPlayers = CountPlayersInTeam(CS_TEAM_CT);
+	int NC_Needed = (TotalPlayers / 3);
 	LoopClients(i)
 	{
 		NC_TeleCount[i] = 0;
+		if(NC_NextRound[i])
+		{
+			CS_SwitchTeam(i, CS_TEAM_T);
+		}
+		NC_NextRound[i] = false;
 	}
+	while(CountPlayersInTeam(CS_TEAM_T) <= NC_Needed)
+		CS_SwitchTeam(GetRandomPlayer(CS_TEAM_CT), CS_TEAM_T);
 	return Plugin_Continue;
 }
 
 public Action Event_OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-	//Put all in Spec
 	LoopClients(i)
 	{
 		CS_SwitchTeam(i, CS_TEAM_CT);
@@ -21,7 +27,6 @@ public Action Event_OnRoundEnd(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
-	//Give magic powers
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(IsValidClient(client, true))
 	{
@@ -31,8 +36,6 @@ public Action Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroad
 		StripWeapons(client);
 		if(GetClientTeam(client) == CS_TEAM_CT)
 		{
-			//CreateTimer(0.2, Timer_CTSpawnPost, client);
-			//CreateTimer(1.0, Timer_CTRefillAmmo, GetClientUserId(client), TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
 			GivePlayerItem(client, "weapon_flashbang");
 			SetEntityGravity(client, 1.0);
 			SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.0);
@@ -54,4 +57,6 @@ public Action Event_OnPlayerDeath(Event event, const char[] name, bool dontBroad
 	int victim = GetClientOfUserId(GetEventInt(event, "userid"));
 	if(GetClientTeam(attacker) == CS_TEAM_T && GetClientTeam(victim) == CS_TEAM_CT)
 		++NC_TeleCount[attacker];
+	if(GetClientTeam(attacker) == CS_TEAM_CT && GetClientTeam(victim) == CS_TEAM_T)
+		NC_NextRound[attacker] = true;
 }
