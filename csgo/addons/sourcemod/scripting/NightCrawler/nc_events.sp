@@ -43,7 +43,10 @@ public Action Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroad
 		else if(GetClientTeam(client) == CS_TEAM_T)
 		{
 			NC_TeleCount[client] = 3;
+			SetEntityModel(client, "models/player/custom_player/kuristaja/vader/vader.mdl");
 			SetEntityRenderMode(client, RENDER_NONE);
+			SetEntityGravity(client, 0.5);
+			SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.2);
 			SetEntProp(client, Prop_Send, "m_ArmorValue", 0);
 			SetEntProp(client, Prop_Send, "m_bHasHelmet", 0);
 		}
