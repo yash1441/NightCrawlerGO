@@ -58,12 +58,20 @@ public Action EventSDK_OnTakeDamage(int victim,int &attacker,int &inflictor, flo
 		{
 			if(GetClientTeam(victim) == CS_TEAM_T && GetClientTeam(attacker) == CS_TEAM_CT)
 			{
-				SetEntityRenderMode(victim, RENDER_TRANSCOLOR);
-				CreateTimer(3.0, MakeInvisibleAgain, victim);
+				if(NC_VisibleTimer[victim])
+				{
+					TriggerTimer(NC_VisibleTimer[victim], true);
+					SetEntityRenderMode(victim, RENDER_TRANSCOLOR);
+				}
+				else
+				{
+					SetEntityRenderMode(victim, RENDER_TRANSCOLOR);
+					NC_VisibleTimer[victim] = CreateTimer(3.0, MakeInvisibleAgain, victim);
+				}
 			}
 			else if(GetClientTeam(attacker) == CS_TEAM_T && GetClientTeam(victim) == CS_TEAM_CT)
 			{
-				//Increase Teleports
+				++NC_TeleCount[attacker];
 			}
 		}
 	}
