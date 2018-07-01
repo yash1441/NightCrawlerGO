@@ -45,7 +45,7 @@ bool NC_Suicide[MAXPLAYERS + 1] =  { false, ... };
 bool NC_ExplosionSound = true;
 int NC_TripMine[MAXPLAYERS + 1] =  { 0, ... };
 int NC_TripMineCounter = 0;
-int NC_PoisonCount[MAXPLAYERS + 1] =  { 0, ... };
+int NC_PoisonCount[MAXPLAYERS + 1] =  { 10, ... };
 bool NC_TopPlayer[MAXPLAYERS + 1] =  { false, ... };
 
 char NC_Models[][] = 
@@ -498,7 +498,7 @@ public Action EventSDK_OnTakeDamage(int victim, int &attacker, int &inflictor, f
 			return Plugin_Continue;
 		char CurrentWeapon[64];
 		GetClientWeapon(attacker, CurrentWeapon, sizeof(CurrentWeapon));
-		if (strcmp(CurrentWeapon, "weapon_ssg08", false) == 0)
+		if (strcmp(CurrentWeapon, "weapon_ssg08", false) == 0 && GetClientTeam(victim) == CS_TEAM_T)
 		{
 			NC_PoisonCount[victim] = 0;
 			CreateTimer(5.0, PoisonPlayer, victim, TIMER_REPEAT);
@@ -524,7 +524,7 @@ public Action EventSDK_OnPostThinkPost(int client)
 
 public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 {
-	if (GetClientTeam(client) == CS_TEAM_T || NC_TeleCount[client] > 0)
+	if (GetClientTeam(client) == CS_TEAM_T && NC_TeleCount[client] > 0)
 	{
 		SetTeleportEndPoint(client);
 		return Plugin_Handled;
@@ -1057,6 +1057,7 @@ public void ResetItems(int client)
 	NC_Scout[client] = false;
 	NC_Suicide[client] = false;
 	NC_TripMine[client] = 0;
+	NC_PoisonCount[client] = 10;
 	NC_TopPlayer[client] = false;
 }
 
