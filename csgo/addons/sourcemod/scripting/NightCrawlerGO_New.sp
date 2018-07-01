@@ -60,13 +60,20 @@ char NC_Materials[][] =
 {
 	"materials/models/tripmine/minetexture.vmt", 
 	"materials/models/tripmine/minetexture.vtf", 
-	"materials/sprites/purplelaser1.vmt", 
+	"materials/sprites/purplelaser1.vmt",
+	"materials/sprites/purplelaser1.vtf",
 	"materials/sprites/laserbeam.vmt", 
+	"materials/sprites/laserbeam.vtf", 
 	"materials/sprites/lgtning.vmt", 
+	"materials/sprites/lgtning.vtf", 
 	"materials/sprites/halo01.vmt", 
-	"sprites/blueglow2.vmt", 
+	"materials/sprites/halo01.vtf", 
+	"materials/sprites/blueglow2.vmt", 
+	"materials/sprites/blueglow2.vtf", 
 	"materials/sprites/bluelaser1.vmt", 
-	"materials/sprites/redglow1.vmt"
+	"materials/sprites/bluelaser1.vtf", 
+	"materials/sprites/redglow1.vmt",
+	"materials/sprites/redglow1.vtf"
 };
 
 char NC_Sounds[][] = 
@@ -141,6 +148,7 @@ public void OnMapStart()
 		
 		else if (StrEqual(NC_Materials[i], "materials/sprites/redglow1.vmt", false))
 			NC_GunGlowSprite = PrecacheModel("materials/sprites/redglow1.vmt");
+		else PrecacheModel(NC_Materials[i]);
 	}
 	for (int i = 0; i < sizeof(NC_Sounds); i++)
 	{
@@ -437,6 +445,10 @@ public Action EventSDK_OnClientThink(int client)
 			if (GetClientTeam(client) == CS_TEAM_CT && NC_IsAdrenaline[client])
 			{
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.4);
+			}
+			if (GetClientTeam(client) == CS_TEAM_CT && !NC_IsAdrenaline[client])
+			{
+				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.0);
 			}
 		}
 	}
