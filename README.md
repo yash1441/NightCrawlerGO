@@ -1,5 +1,4 @@
-# Project Development Paused
-
+# Status - Hardcoded Mostly Everything
 
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
