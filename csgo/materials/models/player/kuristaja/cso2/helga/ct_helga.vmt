@@ -1,0 +1,16 @@
+"VertexLitGeneric"
+{
+	"$basetexture"		"models/player/kuristaja/cso2/helga/ct_helga"
+	"$bumpmap"		"models/player/kuristaja/cso2/helga/ct_helga_normal"
+
+	"$phong"			1
+	"$phongboost"		1.2
+	//"$phongexponent"	30
+	"$phongtint"   		"[0.15 0.15 0.15]"
+	"$phongexponenttexture" 	"models/player/kuristaja/cso2/helga/ct_helga_multi"
+
+	"$rimlight"		1
+	"$rimlightexponent"	15
+	"$rimlightboost"		1.0
+	"$rimmask"		0
+}

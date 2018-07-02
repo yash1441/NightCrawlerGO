@@ -1,0 +1,12 @@
+"vertexlitgeneric"
+{
+	"$basetexture"		"models/player/kuristaja/cso2/gsg9/ct_gsg_glass"
+	"$bumpmap"		"models/player/kuristaja/cso2/gsg9/ct_gsg_glass_normal"
+
+	"$envmap"		"env_cubemap"
+	"$envmaptint"		"[ 1 1 .7]"
+	"$envmapsaturation"	0.5
+       	 "$normalmapalphaenvmapmask" 1
+
+	"$translucent" 1
+}

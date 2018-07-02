@@ -1,0 +1,18 @@
+"VertexLitGeneric"
+{
+	"$basetexture"		"models/player/kuristaja/cso2/helga/ct_helga_hair"
+	"$bumpmap"		"models/player/kuristaja/cso2/helga/ct_helga_hair_normal"
+
+
+	"$phong"			1
+	"$phongboost"		1.2
+	//"$phongexponent"		30
+	"$phongtint"   		"[0.15 0.15 0.15]"
+
+	"$rimlight"		1
+	"$rimlightexponent"		15
+	"$rimlightboost"		0.8
+	"$rimmask"		0
+	
+	$alphatest 1
+}

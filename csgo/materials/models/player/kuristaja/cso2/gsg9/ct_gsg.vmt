@@ -1,0 +1,16 @@
+"VertexLitGeneric"
+{
+	"$basetexture"		"models/player/kuristaja/cso2/gsg9/ct_gsg"
+	"$bumpmap"		"models/player/kuristaja/cso2/gsg9/ct_gsg_normal"
+
+	"$phong"			1
+	"$phongboost"		2.2
+	//"$phongexponent"		30
+	"$phongtint"   		"[0.15 0.15 0.15]"
+	"$phongexponenttexture" 	"models/player/kuristaja/cso2/gsg9/ct_gsg_multi"
+
+	"$rimlight"		1
+	"$rimlightexponent"		15
+	"$rimlightboost"		0.8
+	"$rimmask"		0
+}

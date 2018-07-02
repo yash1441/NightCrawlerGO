@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	"$basetexture"		"models/player/kuristaja/cso2/helga/ct_helga_eyelashes"
+	$translucent  1
+	
+}
