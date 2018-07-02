@@ -1,4 +1,4 @@
-# Status - Hardcoded Mostly Everything
+# Status - `Hardcoded Mostly Everything`
 
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
