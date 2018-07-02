@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\player\custom_player\kodua\eliminator\face"
+	"$bumpmap" "models\player\custom_player\kodua\eliminator\face_nm"
+
+	"$phong" "1"
+	"$phongboost" ".2"
+	"$phongexponent" "100"
+	"$phongfresnelranges" "[.1 .2 1]"
+	"$PhongAlbedoTint" "1"
+
+	"$halflambert" "1"
+	"$model" "1"
+	"$nodecal" "1"
+}

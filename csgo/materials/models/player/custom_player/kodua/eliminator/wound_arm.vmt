@@ -1,0 +1,19 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\player\custom_player\kodua\eliminator\arm"
+	"$bumpmap" "models\player\custom_player\kodua\eliminator\arm_nm"
+
+	"$phong" "1"
+	"$phongboost" "8"
+	"$phongexponent" "400"
+	"$phongfresnelranges" "[4 6 2]"
+	"$PhongAlbedoTint" "1"
+
+	"$rimlight" "1"
+	"$rimlightexponent" "33"
+	"$rimlightboost" "1.5"
+	"$rimmask" "1"
+
+	"$halflambert" "1"
+	"$model" "1"
+}
