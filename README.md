@@ -1,5 +1,7 @@
 # Status - `Hardcoded Mostly Everything`
 
+Current Version - 1.1
+
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
 
