@@ -11,7 +11,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.0"
+#define PLUGIN_VERSION "1.1"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -21,6 +21,8 @@ Address NC_SpotRadar = view_as<Address>(868);
 #include <overlays>
 #include <multicolors>
 #include <emitsoundany>
+#include <n_arms_fix>
+#include <fpvm_interface>
 
 int NC_TeleCount[MAXPLAYERS + 1];
 bool NC_NextRound[MAXPLAYERS + 1] =  { false, ... };
@@ -36,6 +38,8 @@ int NC_GrenadeHaloSprite;
 int NC_GrenadeGlowSprite;
 int NC_GunLaserSprite;
 int NC_GunGlowSprite;
+int NC_KnifeModel;
+int NC_KnifeWorldModel;
 
 bool NC_LaserAim[MAXPLAYERS + 1] =  { false, ... };
 int NC_Adrenaline[MAXPLAYERS + 1] =  { 0, ... };
@@ -45,7 +49,7 @@ bool NC_Suicide[MAXPLAYERS + 1] =  { false, ... };
 bool NC_ExplosionSound = true;
 int NC_TripMine[MAXPLAYERS + 1] =  { 0, ... };
 int NC_TripMineCounter = 0;
-int NC_PoisonCount[MAXPLAYERS + 1] =  { 10, ... };
+int NC_PoisonCount[MAXPLAYERS + 1] =  { 0, ... };
 bool NC_TopPlayer[MAXPLAYERS + 1] =  { false, ... };
 
 char NC_Models[][] = 
@@ -53,15 +57,39 @@ char NC_Models[][] =
 	"models/tripmine/tripmine.dx90.vtx", 
 	"models/tripmine/tripmine.mdl", 
 	"models/tripmine/tripmine.phy", 
-	"models/tripmine/tripmine.vvd"
+	"models/tripmine/tripmine.vvd", 
+	"models/player/custom_player/kodua/eliminator/eliminator.mdl", 
+	"models/player/custom_player/kodua/eliminator/eliminator.phy", 
+	"models/player/custom_player/kodua/eliminator/eliminator.vvd", 
+	"models/player/custom_player/kodua/eliminator/eliminator.dx90.vtx", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.dx90.vtx", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.phy", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.vvd", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9_arms.vvd", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9_arms.dx90.vtx", 
+	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9_arms.mdl", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga.dx90.vtx", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga.mdl", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga.phy", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga.vvd", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga_arms.mdl", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga_arms.vvd", 
+	"models/player/custom_player/kuristaja/cso2/helga/helga_arms.dx90.vtx", 
+	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.dx90.vtx", 
+	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.mdl", 
+	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.vvd", 
+	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.dx90.vtx", 
+	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl", 
+	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.vvd"
 };
 
 char NC_Materials[][] = 
 {
 	"materials/models/tripmine/minetexture.vmt", 
 	"materials/models/tripmine/minetexture.vtf", 
-	"materials/sprites/purplelaser1.vmt",
-	"materials/sprites/purplelaser1.vtf",
+	"materials/sprites/purplelaser1.vmt", 
+	"materials/sprites/purplelaser1.vtf", 
 	"materials/sprites/laserbeam.vmt", 
 	"materials/sprites/laserbeam.vtf", 
 	"materials/sprites/lgtning.vmt", 
@@ -72,8 +100,65 @@ char NC_Materials[][] =
 	"materials/sprites/blueglow2.vtf", 
 	"materials/sprites/bluelaser1.vmt", 
 	"materials/sprites/bluelaser1.vtf", 
-	"materials/sprites/redglow1.vmt",
-	"materials/sprites/redglow1.vtf"
+	"materials/sprites/redglow1.vmt", 
+	"materials/sprites/redglow1.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3900.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3901.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3902.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3903.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3904.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3905.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/7_m3905_b.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/arm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/arm_nm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/body.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/body_nm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/em3905.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/eyes.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/face.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/face_nm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/fur.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/fur_nm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/hand.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/hand_nm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/leg.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/leg_nm.vtf", 
+	"materials/models/player/custom_player/kodua/eliminator/teeth.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/throat.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/wound_arm.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/wound_body.vmt", 
+	"materials/models/player/custom_player/kodua/eliminator/wound_leg.vmt", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_glass_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand.vmt", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand.vtf", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_multi.vtf", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg.vmt", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg.vtf", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_glass.vmt", 
+	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_glass.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_glove_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hair.vmt", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hair.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hair_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hand.vmt", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hair2.vmt", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hand.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_hand_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_multi.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_normal.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga.vmt", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_eyelashes.vmt", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_eyelashes.vtf", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_glove.vmt", 
+	"materials/models/player/kuristaja/cso2/helga/ct_helga_glove.vtf", 
+	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_d.vmt", 
+	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_d.vtf", 
+	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_n.vtf", 
+	"materials/models/weapons/ventoz/Abyss_Greatsword/green.vtf", 
+	"materials/models/weapons/ventoz/Abyss_Greatsword/painted_silver_ldr.vtf"
 };
 
 char NC_Sounds[][] = 
@@ -126,29 +211,33 @@ public void OnMapStart()
 	for (int i = 0; i < sizeof(NC_Models); i++)
 	{
 		AddFileToDownloadsTable(NC_Models[i]);
-		PrecacheModel(NC_Models[i], true);
+		if (StrEqual(NC_Models[i], "models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.mdl", true))
+			NC_KnifeModel = PrecacheModel("models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.mdl");
+		else if (StrEqual(NC_Models[i], "models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl", true))
+			NC_KnifeWorldModel = PrecacheModel("models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl");
+		else PrecacheModel(NC_Models[i], true);
 	}
 	for (int i = 0; i < sizeof(NC_Materials); i++)
 	{
 		AddFileToDownloadsTable(NC_Materials[i]);
-		if (StrEqual(NC_Materials[i], "materials/sprites/laserbeam.vmt", false))
+		if (StrEqual(NC_Materials[i], "materials/sprites/laserbeam.vmt", true))
 			NC_GrenadeBeamSprite1 = PrecacheModel("materials/sprites/laserbeam.vmt");
 		
-		else if (StrEqual(NC_Materials[i], "materials/sprites/lgtning.vmt", false))
+		else if (StrEqual(NC_Materials[i], "materials/sprites/lgtning.vmt", true))
 			NC_GrenadeBeamSprite1 = PrecacheModel("materials/sprites/lgtning.vmt");
 		
-		else if (StrEqual(NC_Materials[i], "sprites/blueglow2.vmt", false))
+		else if (StrEqual(NC_Materials[i], "sprites/blueglow2.vmt", true))
 			NC_GrenadeGlowSprite = PrecacheModel("sprites/blueglow2.vmt");
 		
-		else if (StrEqual(NC_Materials[i], "materials/sprites/halo01.vmt", false))
+		else if (StrEqual(NC_Materials[i], "materials/sprites/halo01.vmt", true))
 			NC_GrenadeHaloSprite = PrecacheModel("materials/sprites/halo01.vmt");
 		
-		else if (StrEqual(NC_Materials[i], "materials/sprites/bluelaser1.vmt", false))
+		else if (StrEqual(NC_Materials[i], "materials/sprites/bluelaser1.vmt", true))
 			NC_GunLaserSprite = PrecacheModel("materials/sprites/bluelaser1.vmt");
 		
-		else if (StrEqual(NC_Materials[i], "materials/sprites/redglow1.vmt", false))
+		else if (StrEqual(NC_Materials[i], "materials/sprites/redglow1.vmt", true))
 			NC_GunGlowSprite = PrecacheModel("materials/sprites/redglow1.vmt");
-		else PrecacheModel(NC_Materials[i]);
+		else PrecacheModel(NC_Materials[i], true);
 	}
 	for (int i = 0; i < sizeof(NC_Sounds); i++)
 	{
@@ -289,7 +378,6 @@ public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadc
 			KillTimer(NC_FreezeTimer[client]);
 			NC_FreezeTimer[client] = INVALID_HANDLE;
 		}
-		ResetItems(client);
 	}
 	int score = 0;
 	int id = -1;
@@ -310,6 +398,21 @@ public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadc
 public Action Event_OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
 	ChangeTeamStuff();
+	int score = 0;
+	int id = -1;
+	LoopAllClients(client)
+	{
+		ResetItems(client);
+		if (IsValidClient(client) && GetClientTeam(client) == CS_TEAM_CT && CS_GetClientContributionScore(client) > score)
+		{
+			id = client;
+			score = CS_GetClientContributionScore(client);
+		}
+	}
+	if (id == -1)
+		id = GetRandomPlayer(CS_TEAM_CT);
+	
+	NC_TopPlayer[id] = true;
 	return Plugin_Continue;
 }
 
@@ -439,7 +542,7 @@ public Action EventSDK_OnClientThink(int client)
 		{
 			if (GetClientTeam(client) == CS_TEAM_T)
 			{
-				SetEntityGravity(client, 0.4);
+				SetEntityGravity(client, 0.3);
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.1);
 			}
 			if (GetClientTeam(client) == CS_TEAM_CT && NC_IsAdrenaline[client])
@@ -500,7 +603,7 @@ public Action EventSDK_OnTakeDamage(int victim, int &attacker, int &inflictor, f
 		GetClientWeapon(attacker, CurrentWeapon, sizeof(CurrentWeapon));
 		if (strcmp(CurrentWeapon, "weapon_ssg08", false) == 0 && GetClientTeam(victim) == CS_TEAM_T)
 		{
-			NC_PoisonCount[victim] = 0;
+			NC_PoisonCount[victim] = 10;
 			CreateTimer(5.0, PoisonPlayer, victim, TIMER_REPEAT);
 		}
 	}
@@ -745,13 +848,13 @@ public Action PoisonPlayer(Handle timer, any client)
 	{
 		int SlapMax = 5;
 		if (SlapMax >= life)
-			SlapPlayer(client, GetRandomInt(0,life - 1), true);
-		else SlapPlayer(client, GetRandomInt(0,SlapMax), true);
+			SlapPlayer(client, GetRandomInt(0, life - 1), true);
+		else SlapPlayer(client, GetRandomInt(0, SlapMax), true);
 	}
-		
-	NC_PoisonCount[client]++;
 	
-	if (NC_PoisonCount[client] == 10)
+	--NC_PoisonCount[client];
+	
+	if (NC_PoisonCount[client] <= 0)
 	{
 		NC_PoisonCount[client] = 0;
 		return Plugin_Stop;
@@ -761,11 +864,11 @@ public Action PoisonPlayer(Handle timer, any client)
 
 public Action DoMine(int client)
 {
-	if(IsValidClient(client))
+	if (IsValidClient(client))
 	{
-		if(IsPlayerAlive(client))
+		if (IsPlayerAlive(client))
 		{
-			if(NC_TripMine[client] > 0)
+			if (NC_TripMine[client] > 0)
 			{
 				PlaceMine(client);
 			}
@@ -781,22 +884,22 @@ public void PlaceMine(int client)
 	float trace_normal[3];
 	GetClientEyePosition(client, trace_start);
 	GetClientEyeAngles(client, trace_angle);
-	GetAngleVectors(trace_angle, trace_end, NULL_VECTOR, NULL_VECTOR );
+	GetAngleVectors(trace_angle, trace_end, NULL_VECTOR, NULL_VECTOR);
 	NormalizeVector(trace_end, trace_end);
-
-	for(int i = 0; i < 3; i++)
-		trace_start[i] += trace_end[i] * 1.0;
 	
-	for(int i = 0; i < 3; i++)
-		trace_end[i] = trace_start[i] + trace_end[i] * 80.0;
+	for (int i = 0; i < 3; i++)
+	trace_start[i] += trace_end[i] * 1.0;
 	
-	TR_TraceRayFilter(trace_start, trace_end, CONTENTS_SOLID|CONTENTS_WINDOW, RayType_EndPoint, TraceFilter_All, 0);
+	for (int i = 0; i < 3; i++)
+	trace_end[i] = trace_start[i] + trace_end[i] * 80.0;
 	
-	if(TR_DidHit(INVALID_HANDLE ))
+	TR_TraceRayFilter(trace_start, trace_end, CONTENTS_SOLID | CONTENTS_WINDOW, RayType_EndPoint, TraceFilter_All, 0);
+	
+	if (TR_DidHit(INVALID_HANDLE))
 	{
 		--NC_TripMine[client];
-
-		if(NC_TripMine[client] != 0)
+		
+		if (NC_TripMine[client] != 0)
 		{
 			PrintCenterText(client, "[NC] You have %d mines left!", NC_TripMine[client]);
 		}
@@ -804,12 +907,12 @@ public void PlaceMine(int client)
 		{
 			PrintCenterText(client, "[NC] That was your last mine!");
 		}
-
-		TR_GetEndPosition(trace_end, INVALID_HANDLE );
-		TR_GetPlaneNormal(INVALID_HANDLE , trace_normal);
-		 
+		
+		TR_GetEndPosition(trace_end, INVALID_HANDLE);
+		TR_GetPlaneNormal(INVALID_HANDLE, trace_normal);
+		
 		SetupMine(client, trace_end, trace_normal);
-
+		
 	}
 	else
 	{
@@ -819,11 +922,11 @@ public void PlaceMine(int client)
 
 public void SetupMine(int client, float position[3], float normal2[3])
 {
-  
+	
 	char mine_name[64];
 	char beam_name[64];
 	char str[128];
-
+	
 	Format(mine_name, 64, "NC_Mine_%d", NC_TripMineCounter);
 	
 	
@@ -832,53 +935,53 @@ public void SetupMine(int client, float position[3], float normal2[3])
 	
 	
 	int ent = CreateEntityByName("prop_physics_override");
-
+	
 	Format(beam_name, 64, "rxgtripmine%d_%d", NC_TripMineCounter, ent);
-
-	DispatchKeyValue(ent, "model", "models/tripmine/tripmine.mdl" );
+	
+	DispatchKeyValue(ent, "model", "models/tripmine/tripmine.mdl");
 	DispatchKeyValue(ent, "physdamagescale", "0.0");
 	DispatchKeyValue(ent, "health", "1");
 	DispatchKeyValue(ent, "targetname", mine_name);
 	DispatchKeyValue(ent, "spawnflags", "256");
 	DispatchSpawn(ent);
-
+	
 	SetEntityMoveType(ent, MOVETYPE_NONE);
 	SetEntProp(ent, Prop_Data, "m_takedamage", 2);
 	SetEntPropEnt(ent, Prop_Data, "m_hLastAttacker", client);
-	SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity",client);
+	SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity", client);
 	SetEntityRenderColor(ent, 255, 255, 255, 255);
 	SetEntProp(ent, Prop_Send, "m_CollisionGroup", 2);
-
 	
-
+	
+	
 	Format(str, sizeof(str), "%s,Kill,,0,-1", beam_name);
 	DispatchKeyValue(ent, "OnBreak", str);
-
+	
 	HookSingleEntityOutput(ent, "OnBreak", MineBreak, true);
-
-	for(int i =0 ; i < 3; i++) {
+	
+	for (int i = 0; i < 3; i++) {
 		position[i] += normal2[i] * 0.5;
 	}
 	TeleportEntity(ent, position, angles, NULL_VECTOR);
-
+	
 	TR_TraceRayFilter(position, angles, CONTENTS_SOLID, RayType_Infinite, TraceFilter_All, 0);
-
+	
 	float beamend[3];
-	TR_GetEndPosition(beamend, INVALID_HANDLE );
-
+	TR_GetEndPosition(beamend, INVALID_HANDLE);
+	
 	int ent_laser = CreateLaser(beamend, position, beam_name, GetClientTeam(client));
 	
 	HookSingleEntityOutput(ent_laser, "OnTouchedByEntity", MineLaser_OnTouch);
-	SetEntPropEnt(ent_laser, Prop_Data, "m_hOwnerEntity",client);
+	SetEntPropEnt(ent_laser, Prop_Data, "m_hOwnerEntity", client);
 	
 	Handle data;
-	CreateDataTimer(1.0, ActivateTimer, data, TIMER_REPEAT);  
+	CreateDataTimer(1.0, ActivateTimer, data, TIMER_REPEAT);
 	ResetPack(data);
 	WritePackCell(data, 0);
 	WritePackCell(data, ent);
 	WritePackCell(data, ent_laser);
-
-	PlayMineSound( ent, "weapons/g3sg1/g3sg1_slideback.wav" );
+	
+	PlayMineSound(ent, "weapons/g3sg1/g3sg1_slideback.wav");
 	
 	NC_TripMineCounter++;
 }
@@ -892,33 +995,37 @@ public void MineLaser_OnTouch(const char[] output, int caller, int activator, fl
 {
 	AcceptEntityInput(caller, "TurnOff");
 	AcceptEntityInput(caller, "TurnOn");
-	if(!IsPlayerAlive(activator) || !IsClientInGame(activator)) return;
+	if (!IsPlayerAlive(activator) || !IsClientInGame(activator))return;
 	bool detonate = false;
 	
 	int owner = GetEntPropEnt(caller, Prop_Data, "m_hOwnerEntity");
 	
-	if(!IsValidClient(owner) || !IsPlayerAlive(owner))
+	if (!IsValidClient(owner) || !IsPlayerAlive(owner))
 	{
 		detonate = true;
 	}
 	else
 	{
-		if(GetClientTeam(activator) == CS_TEAM_T)
+		if (GetClientTeam(activator) == CS_TEAM_T)
 		{
 			DispatchKeyValue(caller, "rendercolor", "255 0 0");
 		}
+		else
+		{
+			DispatchKeyValue(caller, "rendercolor", "0 255 0");
+		}
 	}
-	if(detonate)
+	if (detonate)
 	{
 		char targetname[64];
 		GetEntPropString(caller, Prop_Data, "m_iName", targetname, sizeof(targetname));
-
+		
 		char buffers[2][32];
-
+		
 		ExplodeString(targetname, "_", buffers, 2, 32);
-
+		
 		int ent_mine = StringToInt(buffers[1]);
-
+		
 		AcceptEntityInput(ent_mine, "break");
 	}
 	return;
@@ -929,40 +1036,38 @@ public int CreateLaser(float start[3], float end[3], char[] name, int team)
 	int ent = CreateEntityByName("env_beam");
 	if (ent != -1)
 	{
-
 		TeleportEntity(ent, start, NULL_VECTOR, NULL_VECTOR);
 		SetEntityModel(ent, "materials/sprites/purplelaser1.vmt");
 		SetEntPropVector(ent, Prop_Data, "m_vecEndPos", end);
 		DispatchKeyValue(ent, "targetname", name);
 		DispatchKeyValue(ent, "rendercolor", "0 255 0");
 		DispatchKeyValue(ent, "renderamt", "80");
-		DispatchKeyValue(ent, "decalname", "Bigshot"); 
-		DispatchKeyValue(ent, "life", "0"); 
+		DispatchKeyValue(ent, "decalname", "Bigshot");
+		DispatchKeyValue(ent, "life", "0");
 		DispatchKeyValue(ent, "TouchType", "0");
 		DispatchSpawn(ent);
-		SetEntPropFloat(ent, Prop_Data, "m_fWidth", 0.6); 
-		SetEntPropFloat(ent, Prop_Data, "m_fEndWidth", 0.6); 
+		SetEntPropFloat(ent, Prop_Data, "m_fWidth", 1.0);
+		SetEntPropFloat(ent, Prop_Data, "m_fEndWidth", 1.0);
 		ActivateEntity(ent);
 		AcceptEntityInput(ent, "TurnOn");
 	}
-
 	return ent;
 }
 
 public Action ActivateTimer(Handle timer, Handle data)
 {
 	ResetPack(data);
-
+	
 	int counter = ReadPackCell(data);
 	int ent = ReadPackCell(data);
 	int ent_laser = ReadPackCell(data);
-
-	if(!IsValidEntity(ent))
+	
+	if (!IsValidEntity(ent))
 	{
 		return Plugin_Stop;
 	}
-
-	if(counter < 3)
+	
+	if (counter < 3)
 	{
 		PlayMineSound(ent, "weapons/c4/c4_beep1.wav");
 		counter++;
@@ -972,20 +1077,19 @@ public Action ActivateTimer(Handle timer, Handle data)
 	else
 	{
 		PlayMineSound(ent, "items/nvg_on.wav");
-
-		// enable touch trigger and increase brightness
+		
 		DispatchKeyValue(ent_laser, "TouchType", "4");
 		DispatchKeyValue(ent_laser, "renderamt", "220");
-
-
+		
+		
 		return Plugin_Stop;
 	}
 	
 	return Plugin_Handled;
 }
 
-public void MineBreak (const char[] output, int caller, int activator, float delay)
-{ 
+public void MineBreak(const char[] output, int caller, int activator, float delay)
+{
 	float pos[3];
 	GetEntPropVector(caller, Prop_Send, "m_vecOrigin", pos);
 	CreateExplosionDelayed(pos, GetEntPropEnt(caller, Prop_Data, "m_hLastAttacker"));
@@ -993,25 +1097,25 @@ public void MineBreak (const char[] output, int caller, int activator, float del
 
 public void CreateExplosionDelayed(float vec[3], int owner)
 {
-	Handle data;
+	DataPack data;
 	CreateDataTimer(0.1, CreateExplosionDelayedTimer, data);
 	
-	WritePackCell(data,owner);
-	WritePackFloat(data,vec[0]);
-	WritePackFloat(data,vec[1]);
-	WritePackFloat(data,vec[2]);
+	WritePackCell(data, owner);
+	WritePackFloat(data, vec[0]);
+	WritePackFloat(data, vec[1]);
+	WritePackFloat(data, vec[2]);
 }
 
-public Action CreateExplosionDelayedTimer( Handle timer, Handle data)
+public Action CreateExplosionDelayedTimer(Handle timer, DataPack data)
 {
 	ResetPack(data);
 	int owner = ReadPackCell(data);
-
+	
 	float vec[3];
 	vec[0] = ReadPackFloat(data);
 	vec[1] = ReadPackFloat(data);
 	vec[2] = ReadPackFloat(data);
-
+	
 	CreateExplosion(vec, owner);
 	
 	return Plugin_Handled;
@@ -1021,23 +1125,23 @@ public void CreateExplosion(float vec[3], int owner)
 {
 	int ent = CreateEntityByName("env_explosion");
 	DispatchKeyValue(ent, "classname", "env_explosion");
-	SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity",owner);
+	SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity", owner);
 	SetEntProp(ent, Prop_Data, "m_iMagnitude", 300);
-
+	
 	DispatchSpawn(ent);
 	ActivateEntity(ent);
-
+	
 	char exp_sample[64];
-
+	
 	Format(exp_sample, 64, ")weapons/hegrenade/explode%d.wav", GetRandomInt(3, 5));
-
-	if(NC_ExplosionSound)
+	
+	if (NC_ExplosionSound)
 	{
 		NC_ExplosionSound = false;
 		EmitAmbientSoundAny(exp_sample, vec, _, SNDLEVEL_GUNFIRE);
 		CreateTimer(0.1, EnableExplosionSound);
-	} 
-
+	}
+	
 	TeleportEntity(ent, vec, NULL_VECTOR, NULL_VECTOR);
 	AcceptEntityInput(ent, "explode");
 	AcceptEntityInput(ent, "kill");
@@ -1049,6 +1153,43 @@ public Action EnableExplosionSound(Handle timer)
 	return Plugin_Handled;
 }
 
+public void ArmsFix_OnModelSafe(int client)
+{
+	if (IsValidClient(client))
+	{
+		if (GetClientTeam(client) == CS_TEAM_T)
+		{
+			SetEntityModel(client, "models/player/custom_player/kodua/eliminator/eliminator.mdl");
+		}
+		else if (GetClientTeam(client) == CS_TEAM_CT)
+		{
+			if (NC_TopPlayer[client])
+				SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/helga/helga.mdl");
+			else SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl");
+		}
+	}
+}
+
+public void ArmsFix_OnArmsSafe(int client)
+{
+	if (IsValidClient(client))
+	{
+		if (GetClientTeam(client) == CS_TEAM_T)
+		{
+			ArmsFix_SetDefaultArms(client);
+			FPVMI_AddViewModelToClient(client, "weapon_knife", NC_KnifeModel);
+			FPVMI_AddWorldModelToClient(client, "weapon_knife", NC_KnifeWorldModel);
+		}
+		else if (GetClientTeam(client) == CS_TEAM_CT)
+		{
+			FPVMI_RemoveViewModelToClient(client, "weapon_knife");
+			if (NC_TopPlayer[client])
+				SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/cso2/helga/helga_arms.mdl");
+			else SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/cso2/gsg9/gsg9_arms.mdl");
+		}
+	}
+}
+
 public void ResetItems(int client)
 {
 	NC_LaserAim[client] = false;
@@ -1057,7 +1198,7 @@ public void ResetItems(int client)
 	NC_Scout[client] = false;
 	NC_Suicide[client] = false;
 	NC_TripMine[client] = 0;
-	NC_PoisonCount[client] = 10;
+	NC_PoisonCount[client] = 0;
 	NC_TopPlayer[client] = false;
 }
 
@@ -1088,7 +1229,7 @@ public void NCSettings(int client)
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	StripWeapons(client);
 	SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", 1.1);
-	SetEntityGravity(client, 0.4);
+	SetEntityGravity(client, 0.3);
 	SetEntityHealth(client, 250);
 	SetEntProp(client, Prop_Send, "m_bNightVisionOn", 1);
 	SetEntProp(client, Prop_Send, "m_iDefaultFOV", 110);
@@ -1112,13 +1253,12 @@ public void WeaponMenu(int client)
 	SetMenuPagination(menu, MENU_NO_PAGINATION);
 	menu.SetTitle("[NC] Weapon Menu");
 	menu.AddItem("1", "AK-47 + Glock-18");
-	menu.AddItem("2", "M4A4 + P2000");
-	menu.AddItem("3", "M4A1-S + USP-S");
-	menu.AddItem("4", "Nova + P250");
-	menu.AddItem("5", "XM1014 + Tec-9");
-	menu.AddItem("6", "UMP-45 + Five-SeveN");
-	menu.AddItem("7", "M249 + Dual Berettas");
-	menu.AddItem("8", "AWP + Desert Eagle");
+	menu.AddItem("2", "M4A4/M4A1-S + P2000/USP-S");
+	menu.AddItem("3", "Nova + P250");
+	menu.AddItem("4", "XM1014 + Tec-9");
+	menu.AddItem("5", "UMP-45 + Five-SeveN");
+	menu.AddItem("6", "M249 + Dual Berettas");
+	menu.AddItem("7", "AWP + Desert Eagle");
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -1220,33 +1360,30 @@ public int MenuHandler1(Menu menu, MenuAction action, int param1, int param2)
 			{
 				GivePlayerItem(param1, "weapon_m4a4");
 				GivePlayerItem(param1, "weapon_hkp2000");
-			}
-			case 2:
-			{
 				GivePlayerItem(param1, "weapon_m4a1_silencer");
 				GivePlayerItem(param1, "weapon_usp_silencer");
 			}
-			case 3:
+			case 2:
 			{
 				GivePlayerItem(param1, "weapon_nova");
 				GivePlayerItem(param1, "weapon_p250");
 			}
-			case 4:
+			case 3:
 			{
 				GivePlayerItem(param1, "weapon_xm1014");
 				GivePlayerItem(param1, "weapon_tec9");
 			}
-			case 5:
+			case 4:
 			{
 				GivePlayerItem(param1, "weapon_ump45");
 				GivePlayerItem(param1, "weapon_fiveseven");
 			}
-			case 6:
+			case 5:
 			{
 				GivePlayerItem(param1, "weapon_m249");
 				GivePlayerItem(param1, "weapon_elite");
 			}
-			case 7:
+			case 6:
 			{
 				GivePlayerItem(param1, "weapon_awp");
 				GivePlayerItem(param1, "weapon_deagle");
@@ -1307,6 +1444,7 @@ public void MapSettings()
 	SetCvarInt("mp_give_player_c4", 0);
 	SetCvarInt("mp_freezetime", 0);
 	SetCvarInt("ammo_grenade_limit_default", 2);
+	SetCvarInt("mp_weapons_allow_map_placed", 0);
 }
 
 public void HookStuff(int client)
