@@ -1,0 +1,20 @@
+"VertexlitGeneric"
+{
+	"$basetexture" "models\weapons\ventoz\Abyss_Greatsword/Abyss_Greatsword_D"
+	"$bumpmap" "models\weapons\ventoz\Abyss_Greatsword/Abyss_Greatsword_N"
+
+	"$color2"	"[0.7 0.7 0.7]"
+
+	"$phongexponenttexture" "models\weapons\ventoz\Abyss_Greatsword\green"
+	"$phongexponent" "100"
+	"$phongalbedotint" 1
+	"$phong" "1"
+	"$phongboost"	"200"
+	"$phongfresnelranges"	"[0.5 4.75 5]"
+	//"$phongwarptexture" "models/Star_Wars/Characters/First_Order/Phasma/testwarp2"
+
+	"$envmap" "models\weapons\ventoz\Abyss_Greatsword\painted_silver_ldr"
+	"$normalmapalphaenvmapmask"	"1"
+	"$envmaptint"	"[0.00125 0.00125 0.00125]"
+	"$envmapfresnel"	"0.6"
+}
