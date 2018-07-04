@@ -13,7 +13,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.3"
+#define PLUGIN_VERSION "1.5"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -449,9 +449,11 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	
 	CPrintToChatAll("%s {default}Ready or not here they come!", NC_Tag);
 	LoopAllClients(client)
 	{
+		ResetItems(client);
 		if (NC_FreezeTimer[client] != INVALID_HANDLE)
 		{
 			KillTimer(NC_FreezeTimer[client]);
@@ -736,7 +738,7 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 			CreateDataTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, data);
 			
 			WritePackCell(data, client);
-			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos, NULL_VECTOR, true);
+			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_WORLD, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos, NULL_VECTOR, true);
 			NC_Suicide[client] = false;
 		}
 	}
@@ -1241,6 +1243,7 @@ public void CreateExplosion(float vec[3], int owner)
 	SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity", owner);
 	SetEntProp(ent, Prop_Data, "m_iMagnitude", NC_SuicideDamage.IntValue);
 	SetEntProp(ent, Prop_Data, "m_iRadiusOverride", NC_SuicideRadius.IntValue);
+	SetEntProp(ent, Prop_Send, "m_iTeamNum", CS_TEAM_CT);
 	
 	DispatchSpawn(ent);
 	ActivateEntity(ent);
@@ -1366,7 +1369,7 @@ public void WeaponMenu(int client)
 	Menu menu = new Menu(MenuHandler1);
 	SetMenuExitButton(menu, false);
 	SetMenuPagination(menu, MENU_NO_PAGINATION);
-	menu.SetTitle("[NC] Weapon Menu");
+	menu.SetTitle("[NC] Weapon Shop");
 	menu.AddItem("1", "AK-47 + Glock-18");
 	menu.AddItem("2", "M4A4/M4A1-S + P2000/USP-S");
 	menu.AddItem("3", "Nova + P250");
@@ -1382,7 +1385,7 @@ public void ItemMenu(int client)
 	Menu menu = new Menu(MenuHandler2);
 	SetMenuExitButton(menu, false);
 	SetMenuPagination(menu, MENU_NO_PAGINATION);
-	menu.SetTitle("[NC] Weapon Menu");
+	menu.SetTitle("[NC] Item Shop");
 	char buffer[64];
 	if (NC_TopPlayer[client])
 		menu.AddItem("1", "Laser Sight");
@@ -1420,6 +1423,7 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 				NC_TripMine[client] = NC_TripMineCount.IntValue;
 				CPrintToChat(client, "%s {default}Got {green}%ix Trip %s{default}! Set up a trap for the NightCrawlers.", NC_Tag, NC_TripMineCount.IntValue, NC_TripMineBlast.IntValue == 1 ? "Mine" : "Laser");
 				CPrintToChat(client, "%s {default}Press {green}F{default} to deploy your item.", NC_Tag);
+				//ShowHudText(target, -1, "Press F to deploy your item.", NC_Tag);
 			}
 			case 2:
 			{
@@ -1572,6 +1576,7 @@ public void MapSettings()
 	SetCvarInt("mp_freezetime", 0);
 	SetCvarInt("ammo_grenade_limit_default", 3);
 	SetCvarInt("mp_weapons_allow_map_placed", 0);
+	SetCvarInt("mp_default_team_winner_no_objective", 3);
 	SetCvarInt("healthshot_health", NC_HealthshotHealth.IntValue);
 }
 
@@ -1720,7 +1725,7 @@ public void PerformTeleport(int target, float pos[3])
 	pos[2] += 40.0;
 	--NC_TeleCount[target];
 	LastTele[target] = GetGameTime();
-	ShowHudText(target, 1, "Teleports Remaining: %i", NC_TeleCount[target]);
+	ShowHudText(target, -1, "Teleports Remaining: %i", NC_TeleCount[target]);
 }
 
 public void SetTeleportEndPoint(int client)
@@ -1729,31 +1734,41 @@ public void SetTeleportEndPoint(int client)
 	float vOrigin[3];
 	float vBuffer[3];
 	float vStart[3];
-	float Distance;
-	float g_pos[3];
+	
+	bool failed = false;
+	int loopLimit = 100;
 	
 	GetClientEyePosition(client, vOrigin);
 	GetClientEyeAngles(client, vAngles);
+	
+	GetAngleVectors(vAngles, vBuffer, NULL_VECTOR, NULL_VECTOR);
+	NormalizeVector(vBuffer, vBuffer);
+	ScaleVector(vBuffer, 10.0);
 	
 	Handle trace = TR_TraceRayFilterEx(vOrigin, vAngles, MASK_SHOT, RayType_Infinite, TraceEntityFilterPlayer);
 	
 	if (TR_DidHit(trace))
 	{
 		TR_GetEndPosition(vStart, trace);
-		GetVectorDistance(vOrigin, vStart, false);
-		Distance = -35.0;
-		GetAngleVectors(vAngles, vBuffer, NULL_VECTOR, NULL_VECTOR);
-		g_pos[0] = vStart[0] + (vBuffer[0] * Distance);
-		g_pos[1] = vStart[1] + (vBuffer[1] * Distance);
-		g_pos[2] = vStart[2] + (vBuffer[2] * Distance);
+		while (IsClientStuck(vStart, client) && !failed)
+		{
+			SubtractVectors(vStart, vBuffer, vStart);
+			if (GetVectorDistance(vOrigin, vStart, false) < 10 || loopLimit-- < 1)
+			{
+				failed = true;
+				vStart = vOrigin;
+			}
+		}
 	}
 	CloseHandle(trace);
-	PerformTeleport(client, g_pos);
+	if (!failed)
+		PerformTeleport(client, vStart);
+	else CPrintToChat(client, "%s {default}Couldn\'t find proper place to teleport. Please try again at a different location.", NC_Tag);
 }
 
 public bool TraceEntityFilterPlayer(int entity, int contentsMask)
 {
-	return entity > GetMaxClients() || !entity;
+	return entity > GetMaxClients() || entity <= 0 || !entity;
 }
 
 public bool TRDontHitSelf(int entity, int contentsMask, any client)
@@ -1948,4 +1963,23 @@ stock bool GetPlayerEye(int client, float pos[3])
 	CloseHandle(trace);
 	return false;
 } 
+
+stock bool IsClientStuck(float pos[3], int client)
+{
+	float mins[3];
+	float maxs[3];
+	
+	GetClientMins(client, mins);
+	GetClientMaxs(client, maxs);
+	
+	for (new i=0; i<sizeof(mins); i++)
+	{
+		mins[i] -= 3;
+		maxs[i] += 3;
+	}
+	
+	TR_TraceHullFilter(pos, pos, mins, maxs, MASK_SOLID, TraceEntityFilterPlayer, client);
+	
+	return TR_DidHit();
+}
 /*   Fin.   */
