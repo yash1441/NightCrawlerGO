@@ -1,6 +1,6 @@
-# Status - `Almost Finished`
+# Status - `Smashing Bugs`
 
-Current Version - 1.3
+Current Version - 1.5
 
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
