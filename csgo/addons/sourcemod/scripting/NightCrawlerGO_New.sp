@@ -1,6 +1,8 @@
 #pragma semicolon 1
 #pragma newdecls required
 
+EngineVersion g_Game;
+
 Address NC_SpotRadar = view_as<Address>(868);
 #define LoopAllClients(%1) for(int %1 = 1;%1 <= MaxClients;%1++)
 #define LoopClients(%1) for(int %1 = 1;%1 <= MaxClients;%1++) if(IsValidClient(%1))
@@ -11,7 +13,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.1"
+#define PLUGIN_VERSION "1.2"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -31,6 +33,9 @@ float NC_iTime[MAXPLAYERS + 1] =  { 0.0, ... };
 Handle NC_iTimer[MAXPLAYERS + 1];
 Handle NC_FreezeTimer[MAXPLAYERS + 1];
 bool NC_WallClimb[MAXPLAYERS + 1] =  { false, ... };
+float LastTele[MAXPLAYERS + 1];
+//bool NC_LevelUp[MAXPLAYERS + 1] =  { false, ... };
+//int NC_Level[MAXPLAYERS + 1] =  { 0, ... };
 
 int NC_GrenadeBeamSprite1;
 int NC_GrenadeBeamSprite2;
@@ -42,15 +47,39 @@ int NC_KnifeModel;
 int NC_KnifeWorldModel;
 
 bool NC_LaserAim[MAXPLAYERS + 1] =  { false, ... };
-int NC_Adrenaline[MAXPLAYERS + 1] =  { 0, ... };
+int NC_Adrenaline[MAXPLAYERS + 1];
 bool NC_IsAdrenaline[MAXPLAYERS + 1] =  { false, ... };
 bool NC_Scout[MAXPLAYERS + 1] =  { false, ... };
 bool NC_Suicide[MAXPLAYERS + 1] =  { false, ... };
 bool NC_ExplosionSound = true;
-int NC_TripMine[MAXPLAYERS + 1] =  { 0, ... };
+int NC_TripMine[MAXPLAYERS + 1];
 int NC_TripMineCounter = 0;
-int NC_PoisonCount[MAXPLAYERS + 1] =  { 0, ... };
+int NC_PoisonCounter[MAXPLAYERS + 1];
 bool NC_TopPlayer[MAXPLAYERS + 1] =  { false, ... };
+
+ConVar NC_Ratio;
+ConVar NC_VisibleDuration;
+ConVar NC_NightcrawlerHealth;
+ConVar NC_NightcrawlerGravity;
+ConVar NC_NightcrawlerSpeed;
+ConVar NC_TeleportCount;
+ConVar NC_TeleportDelay;
+ConVar NC_Lighting;
+ConVar NC_AdrenalineCount;
+ConVar NC_AdrenalineDuration;
+ConVar NC_AdrenalineSpeed;
+ConVar NC_SuicideDamage;
+ConVar NC_SuicideRadius;
+ConVar NC_SuicideDelay;
+ConVar NC_HealthshotCount;
+ConVar NC_HealthshotHealth;
+ConVar NC_PoisonCount;
+ConVar NC_PoisonInterval;
+ConVar NC_PoisonMaxDamage;
+ConVar NC_TripMineCount;
+ConVar NC_TripMineBlast;
+ConVar NC_FrostNadeCount;
+ConVar NC_NapalmNadeCount;
 
 char NC_Models[][] = 
 {
@@ -172,7 +201,8 @@ char NC_Sounds[][] =
 	"weapons/hegrenade/explode5.wav", 
 	"nightcrawler/teleport.mp3", 
 	"physics/glass/glass_impact_bullet4.wav", 
-	"nightcrawler/freeze_cam.mp3"
+	"nightcrawler/freeze_cam.mp3",
+	"nightcrawler/suicide.mp3"
 };
 
 public Plugin myinfo = 
@@ -186,6 +216,40 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+	g_Game = GetEngineVersion();
+	if (g_Game != Engine_CSGO)
+	{
+		SetFailState("[NC] This plugin is for CS:GO only.");
+	}
+	
+	CreateConVar("nc_version", PLUGIN_VERSION, "NightCrawlerGO by Simon", FCVAR_NOTIFY | FCVAR_PROTECTED);
+	
+	NC_Ratio = CreateConVar("nc_ratio", "3", "X:1 Ratio of players that are nightcrawlers where X is the number of Humans per 1 NightCrawler.", FCVAR_NOTIFY, true, 1.0);
+	NC_VisibleDuration = CreateConVar("nc_visible_time", "3", "Duration for which NightCrawlers are visible upon taking damage.", FCVAR_NOTIFY, true, 0.0);
+	NC_NightcrawlerHealth = CreateConVar("nc_health", "400", "Base health of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
+	NC_NightcrawlerGravity = CreateConVar("nc_gravity", "0.4", "Base gravity of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
+	NC_NightcrawlerSpeed = CreateConVar("nc_speed", "1.1", "Base speed of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
+	NC_TeleportCount = CreateConVar("nc_teleport_count", "3", "Amount of starting teleports given to a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
+	NC_TeleportDelay = CreateConVar("nc_teleport_count", "2", "Minimum required delay between two consecutive teleports.", FCVAR_NOTIFY, true, 0.0);
+	NC_Lighting = CreateConVar("nc_lighting", "g", "Level of lighting in the map. a = pitch black, z = bright like a star.", FCVAR_NOTIFY);
+	NC_AdrenalineCount = CreateConVar("nc_adrenaline_uses", "3", "Amount of uses of Adrenaline.", FCVAR_NOTIFY, true, 0.0);
+	NC_AdrenalineDuration = CreateConVar("nc_adrenaline_time", "10", "Duration for which Adrenaline lasts.", FCVAR_NOTIFY, true, 0.0);
+	NC_AdrenalineSpeed = CreateConVar("nc_adrenaline_speed", "1.4", "Speed during Adrenaline use.", FCVAR_NOTIFY, true, 0.0);
+	NC_SuicideDamage = CreateConVar("nc_suicide_damage", "160", "Amount of damage done by Suicide Bomber.", FCVAR_NOTIFY, true, 0.0);
+	NC_SuicideRadius = CreateConVar("nc_suicide_radius", "100", "Distance / Radius from the player in which damage can be taken.", FCVAR_NOTIFY, true, 0.0);
+	NC_SuicideDelay = CreateConVar("nc_suicide_time", "3", "Delay before exploding.", FCVAR_NOTIFY, true, 0.0);
+	NC_HealthshotCount = CreateConVar("nc_healthshot_uses", "3", "Amount of uses of Healthshot.", FCVAR_NOTIFY, true, 0.0);
+	NC_HealthshotHealth = CreateConVar("nc_healthshot_health", "100", "Amount of health given by a healthshot.", FCVAR_NOTIFY, true, 0.0);
+	NC_PoisonCount = CreateConVar("nc_poison_amount", "3", "Number of times a player is affected by poison.", FCVAR_NOTIFY, true, 0.0);
+	NC_PoisonInterval = CreateConVar("nc_poison_interval", "1", "Interval between two consecutive poison hurts.", FCVAR_NOTIFY, true, 0.0);
+	NC_PoisonMaxDamage = CreateConVar("nc_poison_damage", "5", "Maximum damage done by a poison hurt.", FCVAR_NOTIFY, true, 0.0);
+	NC_TripMineCount = CreateConVar("nc_trip_mine_count", "3", "Amount of trip mines.", FCVAR_NOTIFY, true, 0.0);
+	NC_TripMineBlast = CreateConVar("nc_trip_mine_mode", "1", "0 = Trip Laser, 1 = Trip Mine.", FCVAR_NOTIFY, true, 0.0);
+	NC_FrostNadeCount = CreateConVar("nc_frost_nade_count", "3", "Amount of Frost Nades.", FCVAR_NOTIFY, true, 0.0);
+	NC_NapalmNadeCount = CreateConVar("nc_napalm_nade_count", "3", "Amount of Napalm Nades.", FCVAR_NOTIFY, true, 0.0);
+	
+	NC_HealthshotHealth.AddChangeHook(OnConVarChanged);
+	
 	HookEvent("round_start", Event_OnRoundStart, EventHookMode_Pre);
 	HookEvent("round_end", Event_OnRoundEnd);
 	HookEvent("player_spawn", Event_OnPlayerSpawn);
@@ -202,6 +266,14 @@ public void OnPluginStart()
 	AddCommandListener(Command_Join, "jointeam");
 	
 	SetHudTextParams(-1.0, 0.7, 3.0, 0, 255, 0, 255, 0, 0.0, 0.0, 0.0);
+}
+
+public void OnConVarChanged(ConVar convar, char[] oldValue, char[] newValue)
+{
+	if (StringToInt(newValue) != StringToInt(oldValue))
+	{
+		SetCvarInt("healtshot_health", StringToInt(newValue));
+	}
 }
 
 public void OnMapStart()
@@ -268,6 +340,7 @@ public void OnClientPutInServer(int client)
 	if (IsValidClient(client))
 	{
 		CreateTimer(15.0, Welcome, client);
+		//NC_Level[client] = 0;
 		HookStuff(client);
 	}
 }
@@ -282,6 +355,7 @@ public void OnClientDisconnect(int client)
 		KillTimer(NC_FreezeTimer[client]);
 		NC_FreezeTimer[client] = INVALID_HANDLE;
 	}
+	//NC_Level[client] = 0;
 }
 
 public Action OnNormalSoundPlayed(int clients[64], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags)
@@ -383,6 +457,7 @@ public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadc
 	int id = -1;
 	LoopClients(client)
 	{
+		LastTele[client] = GetGameTime();
 		if (GetClientTeam(client) == CS_TEAM_CT && CS_GetClientContributionScore(client) > score)
 		{
 			id = client;
@@ -542,12 +617,12 @@ public Action EventSDK_OnClientThink(int client)
 		{
 			if (GetClientTeam(client) == CS_TEAM_T)
 			{
-				SetEntityGravity(client, 0.3);
-				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.1);
+				SetEntityGravity(client, NC_NightcrawlerGravity.FloatValue);
+				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", NC_NightcrawlerSpeed.FloatValue);
 			}
 			if (GetClientTeam(client) == CS_TEAM_CT && NC_IsAdrenaline[client])
 			{
-				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.4);
+				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", NC_AdrenalineSpeed.FloatValue);
 			}
 			if (GetClientTeam(client) == CS_TEAM_CT && !NC_IsAdrenaline[client])
 			{
@@ -587,14 +662,14 @@ public Action EventSDK_OnTakeDamage(int victim, int &attacker, int &inflictor, f
 	if (IsValidClient(attacker) && IsValidClient(victim) && GetClientTeam(victim) == CS_TEAM_T && GetClientTeam(attacker) == CS_TEAM_CT)
 	{
 		if (!NC_IsVisible[victim]) {
-			NC_iTime[victim] = 3.0;
+			NC_iTime[victim] = NC_VisibleDuration.FloatValue;
 			SDKUnhook(victim, SDKHook_SetTransmit, Hook_SetTransmit);
 			NC_IsVisible[victim] = true;
 			NC_iTimer[victim] = CreateTimer(1.0, ResetVisibility, victim, TIMER_REPEAT);
 		}
 		else
 		{
-			NC_iTime[victim] = 4.0;
+			NC_iTime[victim] = NC_VisibleDuration.FloatValue + 1.0;
 		}
 		
 		if (!IsPlayerAlive(victim))
@@ -603,8 +678,8 @@ public Action EventSDK_OnTakeDamage(int victim, int &attacker, int &inflictor, f
 		GetClientWeapon(attacker, CurrentWeapon, sizeof(CurrentWeapon));
 		if (strcmp(CurrentWeapon, "weapon_ssg08", false) == 0 && GetClientTeam(victim) == CS_TEAM_T)
 		{
-			NC_PoisonCount[victim] = 10;
-			CreateTimer(5.0, PoisonPlayer, victim, TIMER_REPEAT);
+			NC_PoisonCounter[victim] = NC_PoisonCount.IntValue;
+			CreateTimer(NC_PoisonInterval.FloatValue, PoisonPlayer, victim, TIMER_REPEAT);
 		}
 	}
 	return Plugin_Continue;
@@ -627,7 +702,7 @@ public Action EventSDK_OnPostThinkPost(int client)
 
 public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 {
-	if (GetClientTeam(client) == CS_TEAM_T && NC_TeleCount[client] > 0)
+	if (GetClientTeam(client) == CS_TEAM_T && NC_TeleCount[client] > 0 && GetGameTime() - LastTele[client] > NC_TeleportDelay.IntValue)
 	{
 		SetTeleportEndPoint(client);
 		return Plugin_Handled;
@@ -638,10 +713,10 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 		if (NC_Adrenaline[client] && !NC_IsAdrenaline[client])
 		{
 			SetEntProp(client, Prop_Send, "m_iDefaultFOV", 110);
-			SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", 1.4);
+			SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", NC_AdrenalineSpeed.FloatValue);
 			--NC_Adrenaline[client];
 			NC_IsAdrenaline[client] = true;
-			CreateTimer(6.0, AdrenalineRush, client);
+			CreateTimer(NC_AdrenalineDuration.FloatValue, AdrenalineRush, client);
 		}
 		else if (NC_TripMine[client] > 0)
 		{
@@ -651,8 +726,15 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 		{
 			float pos[3];
 			GetClientAbsOrigin(client, pos);
-			CreateExplosion(pos, client);
-			ForcePlayerSuicide(client);
+			
+			DataPack data;
+			CreateDataTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, data);
+			
+			WritePackCell(data, client);
+			WritePackFloat(data, pos[0]);
+			WritePackFloat(data, pos[1]);
+			WritePackFloat(data, pos[2]);
+			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos, NULL_VECTOR, true);
 			NC_Suicide[client] = false;
 		}
 	}
@@ -758,7 +840,7 @@ public Action Welcome(Handle timer, any client)
 {
 	if (!IsValidClient(client))
 		return Plugin_Handled;
-	CPrintToChat(client, "%s {default}Welcome to the world of {red}Nightcrawlers {default}({green}%s {default}by {green}%s{default})", NC_Tag, PLUGIN_VERSION, PLUGIN_AUTHOR);
+	CPrintToChat(client, "%s {default}Welcome to the world of {red}NightCrawlers {default}({green}%s {default}by {green}%s{default})", NC_Tag, PLUGIN_VERSION, PLUGIN_AUTHOR);
 	return Plugin_Handled;
 }
 
@@ -846,17 +928,17 @@ public Action PoisonPlayer(Handle timer, any client)
 	}
 	else
 	{
-		int SlapMax = 5;
+		int SlapMax = NC_PoisonMaxDamage.IntValue;
 		if (SlapMax >= life)
 			SlapPlayer(client, GetRandomInt(0, life - 1), true);
 		else SlapPlayer(client, GetRandomInt(0, SlapMax), true);
 	}
 	
-	--NC_PoisonCount[client];
+	--NC_PoisonCounter[client];
 	
-	if (NC_PoisonCount[client] <= 0)
+	if (NC_PoisonCounter[client] <= 0)
 	{
-		NC_PoisonCount[client] = 0;
+		NC_PoisonCounter[client] = 0;
 		return Plugin_Stop;
 	}
 	return Plugin_Handled;
@@ -959,7 +1041,8 @@ public void SetupMine(int client, float position[3], float normal2[3])
 	
 	HookSingleEntityOutput(ent, "OnBreak", MineBreak, true);
 	
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 3; i++)
+	{
 		position[i] += normal2[i] * 0.5;
 	}
 	TeleportEntity(ent, position, angles, NULL_VECTOR);
@@ -1006,9 +1089,14 @@ public void MineLaser_OnTouch(const char[] output, int caller, int activator, fl
 	}
 	else
 	{
-		if (GetClientTeam(activator) == CS_TEAM_T)
+		if (GetClientTeam(activator) == CS_TEAM_T && NC_TripMineBlast.IntValue == 0)
 		{
 			DispatchKeyValue(caller, "rendercolor", "255 0 0");
+		}
+		else if (GetClientTeam(activator) == CS_TEAM_T && NC_TripMineBlast.IntValue == 1)
+		{
+			DispatchKeyValue(caller, "rendercolor", "255 0 0");
+			detonate = true;
 		}
 		else
 		{
@@ -1121,12 +1209,30 @@ public Action CreateExplosionDelayedTimer(Handle timer, DataPack data)
 	return Plugin_Handled;
 }
 
+public Action CreateDelayedSuicide(Handle timer, DataPack data)
+{
+	ResetPack(data);
+	int owner = ReadPackCell(data);
+	
+	float vec[3];
+	vec[0] = ReadPackFloat(data);
+	vec[1] = ReadPackFloat(data);
+	vec[2] = ReadPackFloat(data);
+	
+	if (IsPlayerAlive(owner))
+	{
+		CreateExplosion(vec, owner);
+		ForcePlayerSuicide(owner);
+	}
+}
+
 public void CreateExplosion(float vec[3], int owner)
 {
 	int ent = CreateEntityByName("env_explosion");
 	DispatchKeyValue(ent, "classname", "env_explosion");
 	SetEntPropEnt(ent, Prop_Data, "m_hOwnerEntity", owner);
-	SetEntProp(ent, Prop_Data, "m_iMagnitude", 300);
+	SetEntProp(ent, Prop_Data, "m_iMagnitude", NC_SuicideDamage.IntValue);
+	SetEntProp(ent, Prop_Data, "m_iRadiusOverride", NC_SuicideRadius.IntValue);
 	
 	DispatchSpawn(ent);
 	ActivateEntity(ent);
@@ -1183,6 +1289,7 @@ public void ArmsFix_OnArmsSafe(int client)
 		else if (GetClientTeam(client) == CS_TEAM_CT)
 		{
 			FPVMI_RemoveViewModelToClient(client, "weapon_knife");
+			FPVMI_RemoveWorldModelToClient(client, "weapon_knife");
 			if (NC_TopPlayer[client])
 				SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/cso2/helga/helga_arms.mdl");
 			else SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/cso2/gsg9/gsg9_arms.mdl");
@@ -1198,7 +1305,7 @@ public void ResetItems(int client)
 	NC_Scout[client] = false;
 	NC_Suicide[client] = false;
 	NC_TripMine[client] = 0;
-	NC_PoisonCount[client] = 0;
+	NC_PoisonCounter[client] = 0;
 	NC_TopPlayer[client] = false;
 }
 
@@ -1225,12 +1332,12 @@ public void HumanSettings(int client)
 
 public void NCSettings(int client)
 {
-	NC_TeleCount[client] = 3;
+	NC_TeleCount[client] = NC_TeleportCount.IntValue;
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	StripWeapons(client);
-	SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", 1.1);
-	SetEntityGravity(client, 0.3);
-	SetEntityHealth(client, 250);
+	SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", NC_NightcrawlerSpeed.FloatValue);
+	SetEntityGravity(client, NC_NightcrawlerGravity.FloatValue);
+	SetEntityHealth(client, NC_NightcrawlerHealth.IntValue);
 	SetEntProp(client, Prop_Send, "m_bNightVisionOn", 1);
 	SetEntProp(client, Prop_Send, "m_iDefaultFOV", 110);
 	SetEntProp(client, Prop_Send, "m_bSpotted", false);
@@ -1268,17 +1375,23 @@ public void ItemMenu(int client)
 	SetMenuExitButton(menu, false);
 	SetMenuPagination(menu, MENU_NO_PAGINATION);
 	menu.SetTitle("[NC] Weapon Menu");
+	char buffer[64];
 	if (NC_TopPlayer[client])
 		menu.AddItem("1", "Laser Sight");
 	else
 		menu.AddItem("1", "Laser Sight", ITEMDRAW_DISABLED);
-	menu.AddItem("2", "Trip Laser (x2)");
-	menu.AddItem("3", "Frost Grenade (x2)");
-	menu.AddItem("4", "Napalm Grenade (x2)");
+	Format(buffer, sizeof(buffer), "Trip %s (x%i)", NC_TripMineBlast.IntValue == 1 ? "Mine" : "Laser", NC_TripMineCount.IntValue);
+	menu.AddItem("2", buffer);
+	Format(buffer, sizeof(buffer), "Frost Grenade (x%i)", NC_FrostNadeCount.IntValue);
+	menu.AddItem("3", buffer);
+	Format(buffer, sizeof(buffer), "Napalm Grenade (x%i)", NC_NapalmNadeCount.IntValue);
+	menu.AddItem("4", buffer);
 	menu.AddItem("5", "Poison Scout");
 	menu.AddItem("6", "Suicide Bomber");
-	menu.AddItem("7", "Adrenaline (x2)");
-	menu.AddItem("8", "Healthshot (x2)");
+	Format(buffer, sizeof(buffer), "Adrenaline (x%i)", NC_AdrenalineCount.IntValue);
+	menu.AddItem("7", buffer);
+	Format(buffer, sizeof(buffer), "Healthshot (x%i)", NC_HealthshotCount.IntValue);
+	menu.AddItem("8", buffer);
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -1292,30 +1405,30 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 			case 0:
 			{
 				NC_LaserAim[client] = true;
-				CPrintToChat(client, "%s {default}Got {green}Laser Sight{default}! Turns {red}Red{default} upon aiming at Nightcrawlers.", NC_Tag);
+				CPrintToChat(client, "%s {default}Got {green}Laser Sight{default}! Turns {red}Red{default} upon aiming at NightCrawlers.", NC_Tag);
 			}
 			case 1:
 			{
-				NC_TripMine[client] = 2;
-				CPrintToChat(client, "%s {default}Got {green}2x Trip Laser{default}! Set up a trap for the Nightcrawlers.", NC_Tag);
+				NC_TripMine[client] = NC_TripMineCount.IntValue;
+				CPrintToChat(client, "%s {default}Got {green}%ix Trip %s{default}! Set up a trap for the NightCrawlers.", NC_Tag, NC_TripMineCount.IntValue, NC_TripMineBlast.IntValue == 1 ? "Mine" : "Laser");
 				CPrintToChat(client, "%s {default}Press {green}F{default} to deploy your item.", NC_Tag);
 			}
 			case 2:
 			{
-				CPrintToChat(client, "%s {default}Got {green}2x Frost Grenade{default}! Freezes Nightcrawlers upon contact for some time.", NC_Tag);
+				CPrintToChat(client, "%s {default}Got {green}%ix Frost Grenade{default}! Freezes NightCrawlers upon contact for some time.", NC_Tag, NC_FrostNadeCount.IntValue);
 				GivePlayerItem(client, "weapon_smokegrenade");
 				GivePlayerItem(client, "weapon_smokegrenade");
 			}
 			case 3:
 			{
-				CPrintToChat(client, "%s {default}Got {green}2x Napalm Grenade{default}! Burns Nightcrawlers upon contact for some time.", NC_Tag);
+				CPrintToChat(client, "%s {default}Got {green}%ix Napalm Grenade{default}! Burns NightCrawlers upon contact for some time.", NC_Tag, NC_NapalmNadeCount.IntValue);
 				GivePlayerItem(client, "weapon_hegrenade");
 				GivePlayerItem(client, "weapon_hegrenade");
 			}
 			case 4:
 			{
 				NC_Scout[client] = true;
-				CPrintToChat(client, "%s {default}Got a {green}Scout{default} with {green}Poisonous Bullets{default}! Hear the cries of the Nightcrawlers affected.", NC_Tag);
+				CPrintToChat(client, "%s {default}Got a {green}Scout{default} with {green}Poisonous Bullets{default}! Hear the cries of the NightCrawlers affected.", NC_Tag);
 				int slot;
 				if ((slot = GetPlayerWeaponSlot(client, 0)) != -1)
 				{
@@ -1326,20 +1439,22 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 			case 5:
 			{
 				NC_Suicide[client] = true;
-				CPrintToChat(client, "%s {default}You are now a {green}Suicide Bomber{default}! Take Nightcrawlers down with you.", NC_Tag);
+				CPrintToChat(client, "%s {default}You are now a {green}Suicide Bomber{default}! Take NightCrawlers down with you.", NC_Tag);
 				CPrintToChat(client, "%s {default}Press {green}F{default} to use your item.", NC_Tag);
 			}
 			case 6:
 			{
-				NC_Adrenaline[client] = 2;
-				CPrintToChat(client, "%s {default}Got {green}2x Adrenaline{default} shots! Use them to run faster for some time.", NC_Tag);
+				NC_Adrenaline[client] = NC_AdrenalineCount.IntValue;
+				CPrintToChat(client, "%s {default}Got {green}%ix Adrenaline{default} shots! Use them to run faster for some time.", NC_Tag, NC_AdrenalineCount.IntValue);
 				CPrintToChat(client, "%s {default}Press {green}F{default} to use your item.", NC_Tag);
 			}
 			case 7:
 			{
-				CPrintToChat(client, "%s {default}Got {green}2x Healthshot{default}! Heal yourself to survive longer.", NC_Tag);
-				GivePlayerItem(client, "weapon_healthshot");
-				GivePlayerItem(client, "weapon_healthshot");
+				CPrintToChat(client, "%s {default}Got {green}%ix Healthshot{default}! Heal yourself to survive longer.", NC_Tag, NC_HealthshotCount.IntValue);
+				for (int i = 0; i < NC_HealthshotCount.IntValue; i++)
+				{
+					GivePlayerItem(client, "weapon_healthshot");
+				}
 			}
 		}
 	}
@@ -1422,8 +1537,11 @@ public int TraceClientViewEntity(int client)
 
 public void MapSettings()
 {
+	char buffer[2];
+	NC_Lighting.GetString(buffer, sizeof(buffer));
+	SetLightStyle(0, buffer);
 	SetCvarStr("mp_teamname_1", "Humans");
-	SetCvarStr("mp_teamname_2", "Nightcrawlers");
+	SetCvarStr("mp_teamname_2", "NightCrawlers");
 	SetCvarInt("sv_ignoregrenaderadio", 1);
 	SetCvarInt("sv_disable_immunity_alpha", 1);
 	SetCvarInt("sv_airaccelerate", 120);
@@ -1443,7 +1561,7 @@ public void MapSettings()
 	SetCvarInt("mp_do_warmup_period", 0);
 	SetCvarInt("mp_give_player_c4", 0);
 	SetCvarInt("mp_freezetime", 0);
-	SetCvarInt("ammo_grenade_limit_default", 2);
+	SetCvarInt("ammo_grenade_limit_default", 3);
 	SetCvarInt("mp_weapons_allow_map_placed", 0);
 }
 
@@ -1527,7 +1645,7 @@ public void ChangeTeamStuff()
 	}
 	
 	int iCTsToMove = 0;
-	iCTsToMove = RoundToFloor(float(players) / 3.0);
+	iCTsToMove = RoundToFloor(float(players) / NC_Ratio.FloatValue);
 	//We need at least one nightcrawler
 	if (iCTsToMove < 1 && players > 1)
 		iCTsToMove = 1;
@@ -1578,6 +1696,7 @@ public void PerformTeleport(int target, float pos[3])
 	}
 	pos[2] += 40.0;
 	--NC_TeleCount[target];
+	LastTele[target] = GetGameTime();
 	ShowHudText(target, 1, "Teleports Remaining: %i", NC_TeleCount[target]);
 }
 
