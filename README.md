@@ -1,4 +1,4 @@
-# Status - `ALmost Finished`
+# Status - `Almost Finished`
 
 Current Version - 1.2
 
