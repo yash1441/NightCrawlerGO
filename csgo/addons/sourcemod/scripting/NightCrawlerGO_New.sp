@@ -13,7 +13,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.2"
+#define PLUGIN_VERSION "1.3"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -34,8 +34,6 @@ Handle NC_iTimer[MAXPLAYERS + 1];
 Handle NC_FreezeTimer[MAXPLAYERS + 1];
 bool NC_WallClimb[MAXPLAYERS + 1] =  { false, ... };
 float LastTele[MAXPLAYERS + 1];
-//bool NC_LevelUp[MAXPLAYERS + 1] =  { false, ... };
-//int NC_Level[MAXPLAYERS + 1] =  { 0, ... };
 
 int NC_GrenadeBeamSprite1;
 int NC_GrenadeBeamSprite2;
@@ -110,7 +108,11 @@ char NC_Models[][] =
 	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.vvd", 
 	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.dx90.vtx", 
 	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl", 
-	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.vvd"
+	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.vvd",
+	"models/weapons/eminem/ice_cube/ice_cube.phy",
+	"models/weapons/eminem/ice_cube/ice_cube.vvd",
+	"models/weapons/eminem/ice_cube/ice_cube.dx90.vtx",
+	"models/weapons/eminem/ice_cube/ice_cube.mdl"
 };
 
 char NC_Materials[][] = 
@@ -187,7 +189,10 @@ char NC_Materials[][] =
 	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_d.vtf", 
 	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_n.vtf", 
 	"materials/models/weapons/ventoz/Abyss_Greatsword/green.vtf", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/painted_silver_ldr.vtf"
+	"materials/models/weapons/ventoz/Abyss_Greatsword/painted_silver_ldr.vtf",
+	"materials/models/weapons/eminem/ice_cube/ice_cube.vtf",
+	"materials/models/weapons/eminem/ice_cube/ice_cube_normal.vtf",
+	"materials/models/weapons/eminem/ice_cube/ice_cube.vmt"
 };
 
 char NC_Sounds[][] = 
@@ -272,7 +277,7 @@ public void OnConVarChanged(ConVar convar, char[] oldValue, char[] newValue)
 {
 	if (StringToInt(newValue) != StringToInt(oldValue))
 	{
-		SetCvarInt("healtshot_health", StringToInt(newValue));
+		SetCvarInt("healthshot_health", StringToInt(newValue));
 	}
 }
 
@@ -801,6 +806,13 @@ public Action Unfreeze(Handle timer, any client)
 	}
 }
 
+public Action UnfreezeModel(Handle timer, any data)
+{
+	int ent = EntRefToEntIndex(data);
+	if (ent > 0)
+		AcceptEntityInput(ent, "Kill");
+}
+
 public Action CreateEvent_SmokeDetonate(Handle timer, any entity)
 {
 	if (!IsValidEdict(entity))
@@ -904,7 +916,7 @@ public Action CreateBeam(any client)
 	
 	TE_SetupBeamPoints(f_newPlayerViewOrigin, f_playerViewDestination, NC_GunLaserSprite, 0, 0, 0, life, width, 0.0, 1, 0.0, color, 0);
 	TE_SendToAll();
-	
+
 	TE_SetupGlowSprite(f_playerViewDestination, NC_GunGlowSprite, life, dotWidth, color[3]);
 	TE_SendToAll();
 	
@@ -1416,25 +1428,26 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 			case 2:
 			{
 				CPrintToChat(client, "%s {default}Got {green}%ix Frost Grenade{default}! Freezes NightCrawlers upon contact for some time.", NC_Tag, NC_FrostNadeCount.IntValue);
-				GivePlayerItem(client, "weapon_smokegrenade");
-				GivePlayerItem(client, "weapon_smokegrenade");
+				for (int i = 0; i < NC_FrostNadeCount.IntValue; i++)
+				{
+					GivePlayerItem(client, "weapon_smokegrenade");
+				}
 			}
 			case 3:
 			{
 				CPrintToChat(client, "%s {default}Got {green}%ix Napalm Grenade{default}! Burns NightCrawlers upon contact for some time.", NC_Tag, NC_NapalmNadeCount.IntValue);
-				GivePlayerItem(client, "weapon_hegrenade");
-				GivePlayerItem(client, "weapon_hegrenade");
+				for (int i = 0; i < NC_NapalmNadeCount.IntValue; i++)
+				{
+					GivePlayerItem(client, "weapon_hegrenade");
+				}
 			}
 			case 4:
 			{
 				NC_Scout[client] = true;
 				CPrintToChat(client, "%s {default}Got a {green}Scout{default} with {green}Poisonous Bullets{default}! Hear the cries of the NightCrawlers affected.", NC_Tag);
-				int slot;
-				if ((slot = GetPlayerWeaponSlot(client, 0)) != -1)
-				{
-					RemovePlayerItem(client, slot);
-				}
+				StripWeapons(client);
 				GivePlayerItem(client, "weapon_ssg08");
+				GivePlayerItem(client, "weapon_cz75a");
 			}
 			case 5:
 			{
@@ -1464,6 +1477,7 @@ public int MenuHandler1(Menu menu, MenuAction action, int param1, int param2)
 {
 	if (action == MenuAction_Select)
 	{
+		StripWeapons(param1);
 		switch (param2)
 		{
 			case 0:
@@ -1563,6 +1577,7 @@ public void MapSettings()
 	SetCvarInt("mp_freezetime", 0);
 	SetCvarInt("ammo_grenade_limit_default", 3);
 	SetCvarInt("mp_weapons_allow_map_placed", 0);
+	SetCvarInt("healthshot_health", NC_HealthshotHealth.IntValue);
 }
 
 public void HookStuff(int client)
@@ -1619,9 +1634,22 @@ public bool Freeze(int client, int attacker, float time)
 	GetClientEyePosition(client, vec);
 	vec[2] -= 50.0;
 	EmitAmbientSoundAny("physics/glass/glass_impact_bullet4.wav", vec, client, SNDLEVEL_RAIDSIREN);
-	
 	TE_SetupGlowSprite(vec, NC_GrenadeGlowSprite, time, 2.0, 50);
 	TE_SendToAll();
+	
+	vec[2] -= 20.0;
+	int ent;
+	if((ent = CreateEntityByName("prop_dynamic")) != -1)
+	{
+		DispatchKeyValue(ent, "model", "models/weapons/eminem/ice_cube/ice_cube.mdl");
+		DispatchKeyValue(ent, "solid", "0"); 
+		DispatchKeyValueVector(ent, "origin", vec); 
+		DispatchSpawn(ent);
+		
+		ent = EntRefToEntIndex(ent);
+		CreateTimer(time, UnfreezeModel, ent, TIMER_FLAG_NO_MAPCHANGE);
+	}
+	
 	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	NC_FreezeTimer[client] = CreateTimer(time, Unfreeze, client, TIMER_FLAG_NO_MAPCHANGE);
 	return true;
@@ -1795,6 +1823,7 @@ stock void StripWeapons(int client)
 			RemovePlayerItem(client, wepIdx);
 			RemoveEdict(wepIdx);
 		}
+		GivePlayerItem(client, "weapon_knife");
 	}
 }
 
@@ -1925,3 +1954,4 @@ stock bool GetPlayerEye(int client, float pos[3])
 	CloseHandle(trace);
 	return false;
 } 
+/*   Fin.   */
