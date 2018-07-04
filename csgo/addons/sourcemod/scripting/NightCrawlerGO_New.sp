@@ -736,9 +736,6 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 			CreateDataTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, data);
 			
 			WritePackCell(data, client);
-			WritePackFloat(data, pos[0]);
-			WritePackFloat(data, pos[1]);
-			WritePackFloat(data, pos[2]);
 			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_PLAYER, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos, NULL_VECTOR, true);
 			NC_Suicide[client] = false;
 		}
@@ -1226,14 +1223,13 @@ public Action CreateDelayedSuicide(Handle timer, DataPack data)
 	ResetPack(data);
 	int owner = ReadPackCell(data);
 	
-	float vec[3];
-	vec[0] = ReadPackFloat(data);
-	vec[1] = ReadPackFloat(data);
-	vec[2] = ReadPackFloat(data);
+	float pos[3];
+	GetClientAbsOrigin(owner, pos);
+	
 	
 	if (IsPlayerAlive(owner))
 	{
-		CreateExplosion(vec, owner);
+		CreateExplosion(pos, owner);
 		ForcePlayerSuicide(owner);
 	}
 }
@@ -1490,7 +1486,6 @@ public int MenuHandler1(Menu menu, MenuAction action, int param1, int param2)
 				GivePlayerItem(param1, "weapon_m4a4");
 				GivePlayerItem(param1, "weapon_hkp2000");
 				GivePlayerItem(param1, "weapon_m4a1_silencer");
-				GivePlayerItem(param1, "weapon_usp_silencer");
 			}
 			case 2:
 			{
@@ -1823,7 +1818,6 @@ stock void StripWeapons(int client)
 			RemovePlayerItem(client, wepIdx);
 			RemoveEdict(wepIdx);
 		}
-		GivePlayerItem(client, "weapon_knife");
 	}
 }
 
