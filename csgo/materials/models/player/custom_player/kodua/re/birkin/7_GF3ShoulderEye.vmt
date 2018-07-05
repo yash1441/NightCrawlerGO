@@ -1,0 +1,12 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye"
+	"$bumpmap" "models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye_n"
+	"$halflambert" "1"	
+	"$model" "1"
+
+	"$phong" "1"
+	"$phongboost"	"1"
+	"$phongexponent" "45"
+	"$phongFresnelRanges" "[0 0.5 1]"
+}
