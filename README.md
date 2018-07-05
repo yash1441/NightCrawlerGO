@@ -1,6 +1,6 @@
 # Status - `Smashing Bugs`
 
-Current Version - 1.5
+Current Version - 1.6
 
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
@@ -41,7 +41,9 @@ NightCrawler Mod for CS:GO
 | `nc_trip_mine_count` | amount | Amount of trip mines.
 | `nc_trip_mine_mode` | mode | 0 = Trip Laser, 1 = Trip Mine.
 | `nc_frost_nade_count` | amount | Amount of Frost Nades.
+| `nc_frost_nade_radius` | distance | Distance / Radius from the grenade explosion in which NightCrawlers are frozen.
 | `nc_napalm_nade_count` | amount | Amount of Napalm Nades.
+| `nc_napalm_nade_radius` | distance | Distance / Radius from the grenade explosion in which NightCrawlers are burnt.
 
 
 # Inspired by Nightcrawler Mod for CS 1.6 by H3avY Ra1n
