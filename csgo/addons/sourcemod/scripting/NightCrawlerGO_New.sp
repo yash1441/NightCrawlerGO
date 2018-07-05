@@ -13,7 +13,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.5"
+#define PLUGIN_VERSION "1.6"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -32,7 +32,6 @@ bool NC_IsVisible[MAXPLAYERS + 1] =  { false, ... };
 float NC_iTime[MAXPLAYERS + 1] =  { 0.0, ... };
 Handle NC_iTimer[MAXPLAYERS + 1];
 Handle NC_FreezeTimer[MAXPLAYERS + 1];
-bool NC_WallClimb[MAXPLAYERS + 1] =  { false, ... };
 float LastTele[MAXPLAYERS + 1];
 
 int NC_GrenadeBeamSprite1;
@@ -42,7 +41,7 @@ int NC_GrenadeGlowSprite;
 int NC_GunLaserSprite;
 int NC_GunGlowSprite;
 int NC_KnifeModel;
-int NC_KnifeWorldModel;
+//int NC_KnifeWorldModel;
 
 bool NC_LaserAim[MAXPLAYERS + 1] =  { false, ... };
 int NC_Adrenaline[MAXPLAYERS + 1];
@@ -77,18 +76,27 @@ ConVar NC_PoisonMaxDamage;
 ConVar NC_TripMineCount;
 ConVar NC_TripMineBlast;
 ConVar NC_FrostNadeCount;
+ConVar NC_FrostNadeRadius;
 ConVar NC_NapalmNadeCount;
+ConVar NC_NapalmNadeRadius;
 
 char NC_Models[][] = 
 {
 	"models/tripmine/tripmine.dx90.vtx", 
 	"models/tripmine/tripmine.mdl", 
 	"models/tripmine/tripmine.phy", 
-	"models/tripmine/tripmine.vvd", 
-	"models/player/custom_player/kodua/eliminator/eliminator.mdl", 
-	"models/player/custom_player/kodua/eliminator/eliminator.phy", 
-	"models/player/custom_player/kodua/eliminator/eliminator.vvd", 
-	"models/player/custom_player/kodua/eliminator/eliminator.dx90.vtx", 
+	"models/tripmine/tripmine.vvd",
+	"models/player/custom_player/kodua/re/birkin/birkin2.mdl",
+	"models/player/custom_player/kodua/re/birkin/birkin2.dx90.vtx",
+	"models/player/custom_player/kodua/re/birkin/birkin2.phy",
+	"models/player/custom_player/kodua/re/birkin/birkin2.vvd",
+	"models/player/custom_player/xlegend/birkin/birkin_arms.dx90.vtx",
+	"models/player/custom_player/xlegend/birkin/birkin_arms.mdl",
+	"models/player/custom_player/xlegend/birkin/birkin_arms.vvd",
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.dx90.vtx",
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.mdl",
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.phy",
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.vvd",
 	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.dx90.vtx", 
 	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl", 
 	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.phy", 
@@ -108,10 +116,10 @@ char NC_Models[][] =
 	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.vvd", 
 	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.dx90.vtx", 
 	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl", 
-	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.vvd",
-	"models/weapons/eminem/ice_cube/ice_cube.phy",
-	"models/weapons/eminem/ice_cube/ice_cube.vvd",
-	"models/weapons/eminem/ice_cube/ice_cube.dx90.vtx",
+	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.vvd", 
+	"models/weapons/eminem/ice_cube/ice_cube.phy", 
+	"models/weapons/eminem/ice_cube/ice_cube.vvd", 
+	"models/weapons/eminem/ice_cube/ice_cube.dx90.vtx", 
 	"models/weapons/eminem/ice_cube/ice_cube.mdl"
 };
 
@@ -133,32 +141,48 @@ char NC_Materials[][] =
 	"materials/sprites/bluelaser1.vtf", 
 	"materials/sprites/redglow1.vmt", 
 	"materials/sprites/redglow1.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3900.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3901.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3902.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3903.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3904.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3905.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/7_m3905_b.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/arm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/arm_nm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/body.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/body_nm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/em3905.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/eyes.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/face.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/face_nm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/fur.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/fur_nm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/hand.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/hand_nm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/leg.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/leg_nm.vtf", 
-	"materials/models/player/custom_player/kodua/eliminator/teeth.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/throat.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/wound_arm.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/wound_body.vmt", 
-	"materials/models/player/custom_player/kodua/eliminator/wound_leg.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Body002.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Claw.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2hakui.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2kami005.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm001.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm003.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm002.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm004.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Pants.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2ShoulderEye.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body_i.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body001.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body002.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body003.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body008.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw001.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body_i.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Claw.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Claw_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_hakui.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_hakui_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_kami.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_kami_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm_i.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Pants.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Pants_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_ShoulderEye.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_ShoulderEye_n.vtf",
+	"materials/models/player/custom_player/kodua/re/birkin/gore.vmt",
 	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_glass_normal.vtf", 
 	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand.vmt", 
 	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand.vtf", 
@@ -189,9 +213,9 @@ char NC_Materials[][] =
 	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_d.vtf", 
 	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_n.vtf", 
 	"materials/models/weapons/ventoz/Abyss_Greatsword/green.vtf", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/painted_silver_ldr.vtf",
-	"materials/models/weapons/eminem/ice_cube/ice_cube.vtf",
-	"materials/models/weapons/eminem/ice_cube/ice_cube_normal.vtf",
+	"materials/models/weapons/ventoz/Abyss_Greatsword/painted_silver_ldr.vtf", 
+	"materials/models/weapons/eminem/ice_cube/ice_cube.vtf", 
+	"materials/models/weapons/eminem/ice_cube/ice_cube_normal.vtf", 
 	"materials/models/weapons/eminem/ice_cube/ice_cube.vmt"
 };
 
@@ -206,7 +230,7 @@ char NC_Sounds[][] =
 	"weapons/hegrenade/explode5.wav", 
 	"nightcrawler/teleport.mp3", 
 	"physics/glass/glass_impact_bullet4.wav", 
-	"nightcrawler/freeze_cam.mp3",
+	"nightcrawler/freeze_cam.mp3", 
 	"nightcrawler/suicide.mp3"
 };
 
@@ -231,8 +255,8 @@ public void OnPluginStart()
 	
 	NC_Ratio = CreateConVar("nc_ratio", "3", "X:1 Ratio of players that are nightcrawlers where X is the number of Humans per 1 NightCrawler.", FCVAR_NOTIFY, true, 1.0);
 	NC_VisibleDuration = CreateConVar("nc_visible_time", "3", "Duration for which NightCrawlers are visible upon taking damage.", FCVAR_NOTIFY, true, 0.0);
-	NC_NightcrawlerHealth = CreateConVar("nc_health", "400", "Base health of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
-	NC_NightcrawlerGravity = CreateConVar("nc_gravity", "0.4", "Base gravity of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
+	NC_NightcrawlerHealth = CreateConVar("nc_health", "150", "Base health of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
+	NC_NightcrawlerGravity = CreateConVar("nc_gravity", "0.3", "Base gravity of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_NightcrawlerSpeed = CreateConVar("nc_speed", "1.1", "Base speed of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_TeleportCount = CreateConVar("nc_teleport_count", "3", "Amount of starting teleports given to a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_TeleportDelay = CreateConVar("nc_teleport_count", "2", "Minimum required delay between two consecutive teleports.", FCVAR_NOTIFY, true, 0.0);
@@ -241,8 +265,8 @@ public void OnPluginStart()
 	NC_AdrenalineDuration = CreateConVar("nc_adrenaline_time", "10", "Duration for which Adrenaline lasts.", FCVAR_NOTIFY, true, 0.0);
 	NC_AdrenalineSpeed = CreateConVar("nc_adrenaline_speed", "1.4", "Speed during Adrenaline use.", FCVAR_NOTIFY, true, 0.0);
 	NC_SuicideDamage = CreateConVar("nc_suicide_damage", "160", "Amount of damage done by Suicide Bomber.", FCVAR_NOTIFY, true, 0.0);
-	NC_SuicideRadius = CreateConVar("nc_suicide_radius", "100", "Distance / Radius from the player in which damage can be taken.", FCVAR_NOTIFY, true, 0.0);
-	NC_SuicideDelay = CreateConVar("nc_suicide_time", "3", "Delay before exploding.", FCVAR_NOTIFY, true, 0.0);
+	NC_SuicideRadius = CreateConVar("nc_suicide_radius", "200", "Distance / Radius from the player in which damage can be taken.", FCVAR_NOTIFY, true, 0.0);
+	NC_SuicideDelay = CreateConVar("nc_suicide_time", "2", "Delay before exploding.", FCVAR_NOTIFY, true, 0.0);
 	NC_HealthshotCount = CreateConVar("nc_healthshot_uses", "3", "Amount of uses of Healthshot.", FCVAR_NOTIFY, true, 0.0);
 	NC_HealthshotHealth = CreateConVar("nc_healthshot_health", "100", "Amount of health given by a healthshot.", FCVAR_NOTIFY, true, 0.0);
 	NC_PoisonCount = CreateConVar("nc_poison_amount", "3", "Number of times a player is affected by poison.", FCVAR_NOTIFY, true, 0.0);
@@ -251,7 +275,9 @@ public void OnPluginStart()
 	NC_TripMineCount = CreateConVar("nc_trip_mine_count", "3", "Amount of trip mines.", FCVAR_NOTIFY, true, 0.0);
 	NC_TripMineBlast = CreateConVar("nc_trip_mine_mode", "1", "0 = Trip Laser, 1 = Trip Mine.", FCVAR_NOTIFY, true, 0.0);
 	NC_FrostNadeCount = CreateConVar("nc_frost_nade_count", "3", "Amount of Frost Nades.", FCVAR_NOTIFY, true, 0.0);
+	NC_FrostNadeRadius = CreateConVar("nc_frost_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are frozen.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeCount = CreateConVar("nc_napalm_nade_count", "3", "Amount of Napalm Nades.", FCVAR_NOTIFY, true, 0.0);
+	NC_NapalmNadeRadius = CreateConVar("nc_napalm_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are burnt.", FCVAR_NOTIFY, true, 0.0);
 	
 	NC_HealthshotHealth.AddChangeHook(OnConVarChanged);
 	
@@ -288,10 +314,8 @@ public void OnMapStart()
 	for (int i = 0; i < sizeof(NC_Models); i++)
 	{
 		AddFileToDownloadsTable(NC_Models[i]);
-		if (StrEqual(NC_Models[i], "models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.mdl", true))
-			NC_KnifeModel = PrecacheModel("models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.mdl");
-		else if (StrEqual(NC_Models[i], "models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl", true))
-			NC_KnifeWorldModel = PrecacheModel("models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl");
+		if (StrEqual(NC_Models[i], "models/player/custom_player/xlegend/birkin/birkin_arms.mdl", true))
+			NC_KnifeModel = PrecacheModel("models/player/custom_player/xlegend/birkin/birkin_arms.mdl");
 		else PrecacheModel(NC_Models[i], true);
 	}
 	for (int i = 0; i < sizeof(NC_Materials); i++)
@@ -365,10 +389,6 @@ public void OnClientDisconnect(int client)
 
 public Action OnNormalSoundPlayed(int clients[64], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags)
 {
-	if (StrContains(sample, "land") != -1)
-	{
-		return Plugin_Stop;
-	}
 	if (StrContains(sample, "footsteps") != -1 && IsValidClient(entity) && GetClientTeam(entity) == CS_TEAM_T)
 	{
 		return Plugin_Stop;
@@ -384,36 +404,99 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 {
 	if (GetClientTeam(client) == CS_TEAM_T)
 	{
-		if (buttons & IN_USE && NC_WallClimb[client] == false)
+		if (buttons & IN_USE)
 		{
-			float f_FinallVector[3];
-			float f_EyePosition[3];
-			float f_EyeViewPoint[3];
-			GetClientEyePosition(client, f_EyePosition);
-			GetPlayerEyeViewPoint(client, f_EyeViewPoint);
-			MakeVectorFromPoints(f_EyeViewPoint, f_EyePosition, f_FinallVector);
-			if (GetVectorLength(f_FinallVector) < 50.0)
-			{
-				NC_WallClimb[client] = true;
-			}
-		}
-		if (NC_WallClimb[client] == true)
-		{
-			SetEntityMoveType(client, MOVETYPE_ISOMETRIC);
+			bool IsNearWall = false;
+			bool IsNearCeiling = false;
 			
-			float f_cLoc[3];
-			float f_cAng[3];
-			float f_cEndPos[3];
-			float f_vector[3];
-			GetClientEyePosition(client, f_cLoc);
-			GetClientEyeAngles(client, f_cAng);
-			TR_TraceRayFilter(f_cLoc, f_cAng, MASK_ALL, RayType_Infinite, TraceRayTryToHit);
-			TR_GetEndPosition(f_cEndPos);
-			MakeVectorFromPoints(f_cLoc, f_cEndPos, f_vector);
-			NormalizeVector(f_vector, f_vector);
-			ScaleVector(f_vector, 300.0);
-			TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, f_vector);
-			NC_WallClimb[client] = false;
+			Handle traceRay;
+			float testVector[3];
+			float testPosition[3];
+			float testEndPosition[3];
+			GetClientAbsOrigin(client, testPosition);
+			testPosition[2] += 20.0;
+			for (int i = 0; i < 360; i += 30)
+			{
+				testVector[1] = float(i);
+				traceRay = TR_TraceRayFilterEx(testPosition, testVector, MASK_SOLID, RayType_Infinite, TRDontHitSelf, client);
+				if (TR_DidHit(traceRay))
+				{
+					TR_GetEndPosition(testEndPosition, traceRay);
+					
+					if (GetVectorDistance(testEndPosition, testPosition) <= 25.0)
+					{
+						IsNearWall = true;
+						SetEntityGravity(client, 0.5 * GetEntityGravity(client));
+						CloseHandle(traceRay);
+						break;
+					}
+				}
+				CloseHandle(traceRay);
+				
+			}
+			if (!IsNearWall)
+			{
+				GetClientEyePosition(client, testPosition);
+				testVector = testPosition;
+				testVector[2] += 25.0;
+				traceRay = TR_TraceRayFilterEx(testPosition, testVector, MASK_SOLID, RayType_EndPoint, TRDontHitSelf, client);
+				if (TR_DidHit(traceRay))
+				{
+					IsNearCeiling = true;
+				}
+				CloseHandle(traceRay);
+			}
+			
+			if (!IsNearWall && !IsNearCeiling)
+			{
+				return;
+			}
+			if (IsNearWall || IsNearCeiling)
+			{
+				float velocity[3];
+				float eyeAngles[3];
+				SetEntityMoveType(client, MOVETYPE_WALK);
+				GetClientEyeAngles(client, eyeAngles);
+				bool noTranslationMade = true;
+				if (buttons & IN_FORWARD)
+				{
+					velocity[0] += (300.0 * Cosine(DegToRad(eyeAngles[1])));
+					velocity[1] += (300.0 * Sine(DegToRad(eyeAngles[1])));
+					velocity[2] += -(300.0 * Sine(DegToRad(eyeAngles[0])));
+					noTranslationMade = false;
+				}
+				else if (buttons & IN_BACK)
+				{
+					velocity[0] += -(200.0 * Cosine(DegToRad(eyeAngles[1])));
+					velocity[1] += -(200.0 * Sine(DegToRad(eyeAngles[1])));
+					velocity[2] += (200.0 * Sine(DegToRad(eyeAngles[0])));
+					noTranslationMade = false;
+				}
+				if (buttons & IN_MOVERIGHT)
+				{
+					velocity[0] += (200.0 * Cosine(DegToRad(eyeAngles[1] - 90.0)));
+					velocity[1] += (200.0 * Sine(DegToRad(eyeAngles[1] - 90.0)));
+					noTranslationMade = false;
+				}
+				else if (buttons & IN_MOVELEFT)
+				{
+					velocity[0] += (200.0 * Cosine(DegToRad(eyeAngles[1] + 90)));
+					velocity[1] += (200.0 * Sine(DegToRad(eyeAngles[1] + 90)));
+					noTranslationMade = false;
+				}
+				if (noTranslationMade)
+				{
+					SetEntityMoveType(client, MOVETYPE_NONE);
+					velocity[0] = velocity[1] = velocity[2] = 0.0;
+				}
+				SetEntityGravity(client, 1.5e-45);
+				TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, velocity);
+			}
+			else
+			{
+				SetEntityMoveType(client, MOVETYPE_WALK);
+				SetEntityGravity(client, NC_NightcrawlerGravity.FloatValue);
+			}
 		}
 	}
 }
@@ -435,6 +518,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 	{
 		BeamFollowCreate(entity, HEColor);
 		IgniteEntity(entity, 2.0);
+		SDKHook(entity, SDKHook_SpawnPost, EventSDK_OnHEGrenadeSpawn);
 	}
 	else if (!strcmp(classname, "smokegrenade_projectile"))
 	{
@@ -582,7 +666,7 @@ public void Event_OnSmokeDetonate(Event event, const char[] name, bool dontBroad
 		
 		GetClientAbsOrigin(i, targetOrigin);
 		targetOrigin[2] += 2.0;
-		if (GetVectorDistance(origin, targetOrigin) <= 200.0)
+		if (GetVectorDistance(origin, targetOrigin) <= NC_FrostNadeRadius.FloatValue)
 		{
 			Handle trace = TR_TraceRayFilterEx(origin, targetOrigin, MASK_SOLID, RayType_EndPoint, FilterTarget, i);
 			
@@ -601,7 +685,7 @@ public void Event_OnSmokeDetonate(Event event, const char[] name, bool dontBroad
 				
 				trace = TR_TraceRayFilterEx(origin, targetOrigin, MASK_SOLID, RayType_EndPoint, FilterTarget, i);
 				
-				if ((TR_DidHit(trace) && TR_GetEntityIndex(trace) == i) || (GetVectorDistance(origin, targetOrigin) <= 100.0))
+				if ((TR_DidHit(trace) && TR_GetEntityIndex(trace) == i) || (GetVectorDistance(origin, targetOrigin) <= NC_FrostNadeRadius.FloatValue - 100.0))
 				{
 					Freeze(i, client, 5.0);
 				}
@@ -650,10 +734,6 @@ public Action EventSDK_OnWeaponCanUse(int client, int weapon)
 				char s_weapon[128];
 				GetEntityClassname(weapon, s_weapon, sizeof(s_weapon));
 				if (StrEqual(s_weapon, "weapon_knife"))
-				{
-					return Plugin_Continue;
-				}
-				else if (StrEqual(s_weapon, "weapon_healthshot"))
 				{
 					return Plugin_Continue;
 				}
@@ -707,6 +787,11 @@ public Action EventSDK_OnPostThinkPost(int client)
 	}
 }
 
+public Action EventSDK_OnHEGrenadeSpawn(int entity)
+{
+	CreateTimer(0.01, ChangeGrenadeDamage, entity, TIMER_FLAG_NO_MAPCHANGE);
+}
+
 public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 {
 	if (GetClientTeam(client) == CS_TEAM_T && NC_TeleCount[client] > 0 && GetGameTime() - LastTele[client] > NC_TeleportDelay.IntValue)
@@ -738,7 +823,7 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 			CreateDataTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, data);
 			
 			WritePackCell(data, client);
-			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_WORLD, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos, NULL_VECTOR, true);
+			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_WORLD, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos);
 			NC_Suicide[client] = false;
 		}
 	}
@@ -915,7 +1000,7 @@ public Action CreateBeam(any client)
 	
 	TE_SetupBeamPoints(f_newPlayerViewOrigin, f_playerViewDestination, NC_GunLaserSprite, 0, 0, 0, life, width, 0.0, 1, 0.0, color, 0);
 	TE_SendToAll();
-
+	
 	TE_SetupGlowSprite(f_playerViewDestination, NC_GunGlowSprite, life, dotWidth, color[3]);
 	TE_SendToAll();
 	
@@ -967,6 +1052,12 @@ public Action DoMine(int client)
 			}
 		}
 	}
+}
+
+
+public Action ChangeGrenadeDamage(Handle timer, int ent)
+{
+	SetEntPropFloat(ent, Prop_Send, "m_DmgRadius", NC_NapalmNadeRadius.FloatValue);
 }
 
 public void PlaceMine(int client)
@@ -1276,7 +1367,9 @@ public void ArmsFix_OnModelSafe(int client)
 	{
 		if (GetClientTeam(client) == CS_TEAM_T)
 		{
-			SetEntityModel(client, "models/player/custom_player/kodua/eliminator/eliminator.mdl");
+			if (GetRandomInt(0, 1) == 0)
+				SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin3_f.mdl");
+			else SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin2.mdl");
 		}
 		else if (GetClientTeam(client) == CS_TEAM_CT)
 		{
@@ -1295,7 +1388,6 @@ public void ArmsFix_OnArmsSafe(int client)
 		{
 			ArmsFix_SetDefaultArms(client);
 			FPVMI_AddViewModelToClient(client, "weapon_knife", NC_KnifeModel);
-			FPVMI_AddWorldModelToClient(client, "weapon_knife", NC_KnifeWorldModel);
 		}
 		else if (GetClientTeam(client) == CS_TEAM_CT)
 		{
@@ -1332,10 +1424,10 @@ public void HumanSettings(int client)
 	SetEntProp(client, Prop_Send, "m_bNightVisionOn", 0);
 	SetEntProp(client, Prop_Send, "m_iDefaultFOV", 90);
 	SetEntData(client, FindSendPropInfo("CCSPlayer", "m_iAccount"), 0);
+	SetEntProp(client, Prop_Data, "m_iMaxHealth", 150);
 	StoreToAddress(GetEntityAddress(client) + NC_SpotRadar, 9, NumberType_Int32);
 	if (!IsFakeClient(client))
 	{
-		SendConVarValue(client, FindConVar("sv_min_jump_landing_sound"), "260");
 		SendConVarValue(client, FindConVar("sv_footsteps"), "1");
 	}
 	WeaponMenu(client);
@@ -1359,7 +1451,6 @@ public void NCSettings(int client)
 	ShowHudText(client, 1, "Teleports Remaining: %i", NC_TeleCount[client]);
 	if (!IsFakeClient(client))
 	{
-		SendConVarValue(client, FindConVar("sv_min_jump_landing_sound"), "99999");
 		SendConVarValue(client, FindConVar("sv_footsteps"), "0");
 	}
 }
@@ -1639,11 +1730,11 @@ public bool Freeze(int client, int attacker, float time)
 	
 	vec[2] -= 20.0;
 	int ent;
-	if((ent = CreateEntityByName("prop_dynamic")) != -1)
+	if ((ent = CreateEntityByName("prop_dynamic")) != -1)
 	{
 		DispatchKeyValue(ent, "model", "models/weapons/eminem/ice_cube/ice_cube.mdl");
-		DispatchKeyValue(ent, "solid", "0"); 
-		DispatchKeyValueVector(ent, "origin", vec); 
+		DispatchKeyValue(ent, "solid", "0");
+		DispatchKeyValueVector(ent, "origin", vec);
 		DispatchSpawn(ent);
 		
 		ent = EntRefToEntIndex(ent);
@@ -1962,7 +2053,7 @@ stock bool GetPlayerEye(int client, float pos[3])
 	}
 	CloseHandle(trace);
 	return false;
-} 
+}
 
 stock bool IsClientStuck(float pos[3], int client)
 {
@@ -1972,7 +2063,7 @@ stock bool IsClientStuck(float pos[3], int client)
 	GetClientMins(client, mins);
 	GetClientMaxs(client, maxs);
 	
-	for (new i=0; i<sizeof(mins); i++)
+	for (new i = 0; i < sizeof(mins); i++)
 	{
 		mins[i] -= 3;
 		maxs[i] += 3;
