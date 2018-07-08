@@ -9,11 +9,10 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define LoopAliveClients(%1) for(int %1 = 1;%1 <= MaxClients;%1++) if(IsValidClient(%1, true))
 
 #define HEColor 	{255,75,75,255}
-#define SmokeColor	{75,255,75,255}
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.6"
+#define PLUGIN_VERSION "1.7"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -27,6 +26,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #include <fpvm_interface>
 
 int NC_TeleCount[MAXPLAYERS + 1];
+bool NC_IsFrozen[MAXPLAYERS + 1] =  { false, ... };
 bool NC_NextRound[MAXPLAYERS + 1] =  { false, ... };
 bool NC_IsVisible[MAXPLAYERS + 1] =  { false, ... };
 float NC_iTime[MAXPLAYERS + 1] =  { 0.0, ... };
@@ -41,7 +41,6 @@ int NC_GrenadeGlowSprite;
 int NC_GunLaserSprite;
 int NC_GunGlowSprite;
 int NC_KnifeModel;
-//int NC_KnifeWorldModel;
 
 bool NC_LaserAim[MAXPLAYERS + 1] =  { false, ... };
 int NC_Adrenaline[MAXPLAYERS + 1];
@@ -79,24 +78,25 @@ ConVar NC_FrostNadeCount;
 ConVar NC_FrostNadeRadius;
 ConVar NC_NapalmNadeCount;
 ConVar NC_NapalmNadeRadius;
+ConVar NC_AmmoMode;
 
 char NC_Models[][] = 
 {
 	"models/tripmine/tripmine.dx90.vtx", 
 	"models/tripmine/tripmine.mdl", 
 	"models/tripmine/tripmine.phy", 
-	"models/tripmine/tripmine.vvd",
-	"models/player/custom_player/kodua/re/birkin/birkin2.mdl",
-	"models/player/custom_player/kodua/re/birkin/birkin2.dx90.vtx",
-	"models/player/custom_player/kodua/re/birkin/birkin2.phy",
-	"models/player/custom_player/kodua/re/birkin/birkin2.vvd",
-	"models/player/custom_player/xlegend/birkin/birkin_arms.dx90.vtx",
-	"models/player/custom_player/xlegend/birkin/birkin_arms.mdl",
-	"models/player/custom_player/xlegend/birkin/birkin_arms.vvd",
-	"models/player/custom_player/kodua/re/birkin/birkin3_f.dx90.vtx",
-	"models/player/custom_player/kodua/re/birkin/birkin3_f.mdl",
-	"models/player/custom_player/kodua/re/birkin/birkin3_f.phy",
-	"models/player/custom_player/kodua/re/birkin/birkin3_f.vvd",
+	"models/tripmine/tripmine.vvd", 
+	"models/player/custom_player/kodua/re/birkin/birkin2.mdl", 
+	"models/player/custom_player/kodua/re/birkin/birkin2.dx90.vtx", 
+	"models/player/custom_player/kodua/re/birkin/birkin2.phy", 
+	"models/player/custom_player/kodua/re/birkin/birkin2.vvd", 
+	"models/player/custom_player/xlegend/birkin/birkin_arms.dx90.vtx", 
+	"models/player/custom_player/xlegend/birkin/birkin_arms.mdl", 
+	"models/player/custom_player/xlegend/birkin/birkin_arms.vvd", 
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.dx90.vtx", 
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.mdl", 
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.phy", 
+	"models/player/custom_player/kodua/re/birkin/birkin3_f.vvd", 
 	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.dx90.vtx", 
 	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl", 
 	"models/player/custom_player/kuristaja/cso2/gsg9/gsg9.phy", 
@@ -141,48 +141,48 @@ char NC_Materials[][] =
 	"materials/sprites/bluelaser1.vtf", 
 	"materials/sprites/redglow1.vmt", 
 	"materials/sprites/redglow1.vtf", 
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Body002.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Claw.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2hakui.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2kami005.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm001.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm003.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm002.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm004.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Pants.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF2ShoulderEye.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body_i.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body001.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body002.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body003.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body008.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw001.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye.vmt",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body_i.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Claw.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Claw_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_hakui.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_hakui_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_kami.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_kami_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm_i.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Pants.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Pants_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_ShoulderEye.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/EGF2_ShoulderEye_n.vtf",
-	"materials/models/player/custom_player/kodua/re/birkin/gore.vmt",
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Body002.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Claw.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2hakui.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2kami005.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm001.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm003.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm002.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2LegArm004.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2Pants.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF2ShoulderEye.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body_i.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body001.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body002.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body003.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Body008.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3Claw001.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye.vmt", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/7_GF3ShoulderEye_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body_i.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Body_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Claw.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Claw_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_hakui.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_hakui_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_kami.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_kami_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm_i.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_LegArm_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Pants.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_Pants_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_ShoulderEye.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/EGF2_ShoulderEye_n.vtf", 
+	"materials/models/player/custom_player/kodua/re/birkin/gore.vmt", 
 	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_glass_normal.vtf", 
 	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand.vmt", 
 	"materials/models/player/kuristaja/cso2/gsg9/ct_gsg_hand.vtf", 
@@ -278,6 +278,7 @@ public void OnPluginStart()
 	NC_FrostNadeRadius = CreateConVar("nc_frost_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are frozen.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeCount = CreateConVar("nc_napalm_nade_count", "3", "Amount of Napalm Nades.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeRadius = CreateConVar("nc_napalm_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are burnt.", FCVAR_NOTIFY, true, 0.0);
+	NC_AmmoMode = CreateConVar("nc_ammo_mode", "1", "0 = Limited, 1 = Restock ammo on reload, 2 = Restock ammo only on kill", FCVAR_NOTIFY, true, 0.0, true, 2.0);
 	
 	NC_HealthshotHealth.AddChangeHook(OnConVarChanged);
 	
@@ -287,7 +288,8 @@ public void OnPluginStart()
 	HookEvent("player_death", Event_OnPlayerDeath);
 	HookEvent("player_hurt", Event_OnPlayerHurt);
 	HookEvent("hegrenade_detonate", Event_OnHeDetonate);
-	HookEvent("smokegrenade_detonate", Event_OnSmokeDetonate);
+	HookEvent("decoy_detonate", Event_OnDecoyDetonate);
+	HookEvent("weapon_reload", Event_OnWeaponReload);
 	
 	AddNormalSoundHook(OnNormalSoundPlayed);
 	
@@ -369,7 +371,6 @@ public void OnClientPutInServer(int client)
 	if (IsValidClient(client))
 	{
 		CreateTimer(15.0, Welcome, client);
-		//NC_Level[client] = 0;
 		HookStuff(client);
 	}
 }
@@ -384,7 +385,6 @@ public void OnClientDisconnect(int client)
 		KillTimer(NC_FreezeTimer[client]);
 		NC_FreezeTimer[client] = INVALID_HANDLE;
 	}
-	//NC_Level[client] = 0;
 }
 
 public Action OnNormalSoundPlayed(int clients[64], int &numClients, char sample[PLATFORM_MAX_PATH], int &entity, int &channel, float &volume, int &level, int &pitch, int &flags)
@@ -520,14 +520,14 @@ public void OnEntityCreated(int entity, const char[] classname)
 		IgniteEntity(entity, 2.0);
 		SDKHook(entity, SDKHook_SpawnPost, EventSDK_OnHEGrenadeSpawn);
 	}
-	else if (!strcmp(classname, "smokegrenade_projectile"))
+	else if (!strcmp(classname, "decoy_projectile"))
 	{
 		BeamFollowCreate(entity, FreezeColor);
-		CreateTimer(1.3, CreateEvent_SmokeDetonate, entity, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(1.3, CreateEvent_DecoyDetonate, entity, TIMER_FLAG_NO_MAPCHANGE);
 	}
-	else if (!strcmp(classname, "env_particlesmokegrenade"))
+	else if (StrContains(classname, "weapon_", false) != -1)
 	{
-		AcceptEntityInput(entity, "Kill");
+		SDKHookEx(entity, SDKHook_SpawnPost, EventSDK_OnWeaponSpawnPost);
 	}
 }
 
@@ -595,7 +595,21 @@ public Action Event_OnPlayerDeath(Event event, const char[] name, bool dontBroad
 	if (GetClientTeam(attacker) == CS_TEAM_T && GetClientTeam(victim) == CS_TEAM_CT)
 		++NC_TeleCount[attacker];
 	if (GetClientTeam(attacker) == CS_TEAM_CT && GetClientTeam(victim) == CS_TEAM_T)
+	{
 		NC_NextRound[attacker] = true;
+		if (NC_AmmoMode.IntValue == 2)
+		{
+			int weapon = GetEntPropEnt(attacker, Prop_Send, "m_hActiveWeapon");
+			if (weapon != -1 && IsValidEdict(weapon))
+			{
+				int clip = 0;
+				if (GetMaxClip1(weapon, clip))
+				{
+					SetEntProp(weapon, Prop_Send, "m_iClip1", clip);
+				}
+			}
+		}
+	}
 	ResetItems(victim);
 }
 
@@ -615,7 +629,7 @@ public Action Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadc
 	return Plugin_Continue;
 }
 
-public void Event_OnHeDetonate(Event event, const char[] name, bool dontBroadcast)
+public Action Event_OnHeDetonate(Event event, const char[] name, bool dontBroadcast)
 {
 	float origin[3];
 	origin[0] = event.GetFloat("x");
@@ -626,7 +640,7 @@ public void Event_OnHeDetonate(Event event, const char[] name, bool dontBroadcas
 	TE_SendToAll();
 }
 
-public void Event_OnSmokeDetonate(Event event, const char[] name, bool dontBroadcast)
+public Action Event_OnDecoyDetonate(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
@@ -639,7 +653,7 @@ public void Event_OnSmokeDetonate(Event event, const char[] name, bool dontBroad
 	
 	float xyz[3];
 	
-	while ((index = FindEntityByClassname(index, "smokegrenade_projectile")) != -1)
+	while ((index = FindEntityByClassname(index, "decoy_projectile")) != -1)
 	{
 		GetEntPropVector(index, Prop_Send, "m_vecOrigin", xyz);
 		if (xyz[0] == origin[0] && xyz[1] == origin[1] && xyz[2] == origin[2])
@@ -700,6 +714,24 @@ public void Event_OnSmokeDetonate(Event event, const char[] name, bool dontBroad
 	LightCreate(origin);
 }
 
+public Action Event_OnWeaponReload(Handle event, const char[] name, bool dontBroadcast)
+{
+	if (NC_AmmoMode.IntValue == 1)
+	{
+		int client = GetClientOfUserId(GetEventInt(event, "userid"));
+		if (!client || !IsClientInGame(client))
+		{
+			return;
+		}
+		
+		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		if (weapon != -1 && IsValidEdict(weapon))
+		{
+			GivePlayerAmmo(client, 9999, GetEntProp(weapon, Prop_Data, "m_iPrimaryAmmoType"), true);
+		}
+	}
+}
+
 public Action EventSDK_OnClientThink(int client)
 {
 	if (IsValidClient(client))
@@ -714,8 +746,10 @@ public Action EventSDK_OnClientThink(int client)
 			if (GetClientTeam(client) == CS_TEAM_CT && NC_IsAdrenaline[client])
 			{
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", NC_AdrenalineSpeed.FloatValue);
+				int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+				SetEntProp(weapon, Prop_Send, "m_iClip1", 1);
 			}
-			if (GetClientTeam(client) == CS_TEAM_CT && !NC_IsAdrenaline[client])
+			if (GetClientTeam(client) == CS_TEAM_CT && !NC_IsAdrenaline[client] && !IsFakeClient(client))
 			{
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", 1.0);
 			}
@@ -789,12 +823,17 @@ public Action EventSDK_OnPostThinkPost(int client)
 
 public Action EventSDK_OnHEGrenadeSpawn(int entity)
 {
-	CreateTimer(0.01, ChangeGrenadeDamage, entity, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(0.01, ChangeGrenadeRadius, entity, TIMER_FLAG_NO_MAPCHANGE);
+}
+
+public Action EventSDK_OnWeaponSpawnPost(int entity)
+{
+	GetMaxClip1(entity, _, true);
 }
 
 public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 {
-	if (GetClientTeam(client) == CS_TEAM_T && NC_TeleCount[client] > 0 && GetGameTime() - LastTele[client] > NC_TeleportDelay.IntValue)
+	if (GetClientTeam(client) == CS_TEAM_T && NC_TeleCount[client] > 0 && !NC_IsFrozen[client] && GetGameTime() - LastTele[client] > NC_TeleportDelay.IntValue)
 	{
 		SetTeleportEndPoint(client);
 		return Plugin_Handled;
@@ -823,7 +862,7 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 			CreateDataTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, data);
 			
 			WritePackCell(data, client);
-			EmitSoundToAllAny("nightcrawler/suicide.mp3", SOUND_FROM_WORLD, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos);
+			EmitSoundToAllAny("nightcrawler/suicide.mp3", client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 			NC_Suicide[client] = false;
 		}
 	}
@@ -843,7 +882,7 @@ public Action Command_Join(int client, const char[] command, int argc)
 	int NewTeam = StringToInt(arg);
 	int OldTeam = GetClientTeam(client);
 	
-	if ((NewTeam == CS_TEAM_CT && OldTeam == CS_TEAM_T) || (NewTeam == CS_TEAM_T && OldTeam == CS_TEAM_CT))
+	if ((OldTeam == CS_TEAM_T || OldTeam == CS_TEAM_CT) && NewTeam != CS_TEAM_SPECTATOR)
 	{
 		CPrintToChat(client, "%s {default}You can\'t change teams like that.", NC_Tag);
 		return Plugin_Handled;
@@ -887,6 +926,7 @@ public Action Unfreeze(Handle timer, any client)
 		SetEntityMoveType(client, MOVETYPE_WALK);
 		NC_FreezeTimer[client] = INVALID_HANDLE;
 		SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
+		NC_IsFrozen[client] = false;
 	}
 }
 
@@ -897,7 +937,7 @@ public Action UnfreezeModel(Handle timer, any data)
 		AcceptEntityInput(ent, "Kill");
 }
 
-public Action CreateEvent_SmokeDetonate(Handle timer, any entity)
+public Action CreateEvent_DecoyDetonate(Handle timer, any entity)
 {
 	if (!IsValidEdict(entity))
 	{
@@ -906,13 +946,13 @@ public Action CreateEvent_SmokeDetonate(Handle timer, any entity)
 	
 	char classname[64];
 	GetEdictClassname(entity, classname, sizeof(classname));
-	if (!strcmp(classname, "smokegrenade_projectile", false))
+	if (!strcmp(classname, "decoy_projectile", false))
 	{
 		float origin[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
 		int userid = GetClientUserId(GetEntPropEnt(entity, Prop_Send, "m_hThrower"));
 		
-		Handle event = CreateEvent("smokegrenade_detonate");
+		Handle event = CreateEvent("decoy_detonate");
 		
 		SetEventInt(event, "userid", userid);
 		SetEventFloat(event, "x", origin[0]);
@@ -1054,8 +1094,7 @@ public Action DoMine(int client)
 	}
 }
 
-
-public Action ChangeGrenadeDamage(Handle timer, int ent)
+public Action ChangeGrenadeRadius(Handle timer, int ent)
 {
 	SetEntPropFloat(ent, Prop_Send, "m_DmgRadius", NC_NapalmNadeRadius.FloatValue);
 }
@@ -1410,6 +1449,7 @@ public void ResetItems(int client)
 	NC_TripMine[client] = 0;
 	NC_PoisonCounter[client] = 0;
 	NC_TopPlayer[client] = false;
+	NC_IsFrozen[client] = false;
 }
 
 public void HumanSettings(int client)
@@ -1521,7 +1561,7 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 				CPrintToChat(client, "%s {default}Got {green}%ix Frost Grenade{default}! Freezes NightCrawlers upon contact for some time.", NC_Tag, NC_FrostNadeCount.IntValue);
 				for (int i = 0; i < NC_FrostNadeCount.IntValue; i++)
 				{
-					GivePlayerItem(client, "weapon_smokegrenade");
+					GivePlayerItem(client, "weapon_decoy");
 				}
 			}
 			case 3:
@@ -1668,6 +1708,8 @@ public void MapSettings()
 	SetCvarInt("ammo_grenade_limit_default", 3);
 	SetCvarInt("mp_weapons_allow_map_placed", 0);
 	SetCvarInt("mp_default_team_winner_no_objective", 3);
+	SetCvarInt("weapon_auto_cleanup_time", 5);
+	SetCvarInt("mp_death_drop_gun", 0);
 	SetCvarInt("healthshot_health", NC_HealthshotHealth.IntValue);
 }
 
@@ -1728,7 +1770,7 @@ public bool Freeze(int client, int attacker, float time)
 	TE_SetupGlowSprite(vec, NC_GrenadeGlowSprite, time, 2.0, 50);
 	TE_SendToAll();
 	
-	vec[2] -= 20.0;
+	vec[2] -= 10.0;
 	int ent;
 	if ((ent = CreateEntityByName("prop_dynamic")) != -1)
 	{
@@ -1740,7 +1782,7 @@ public bool Freeze(int client, int attacker, float time)
 		ent = EntRefToEntIndex(ent);
 		CreateTimer(time, UnfreezeModel, ent, TIMER_FLAG_NO_MAPCHANGE);
 	}
-	
+	NC_IsFrozen[client] = true;
 	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	NC_FreezeTimer[client] = CreateTimer(time, Unfreeze, client, TIMER_FLAG_NO_MAPCHANGE);
 	return true;
@@ -2072,5 +2114,29 @@ stock bool IsClientStuck(float pos[3], int client)
 	TR_TraceHullFilter(pos, pos, mins, maxs, MASK_SOLID, TraceEntityFilterPlayer, client);
 	
 	return TR_DidHit();
+}
+
+stock bool GetMaxClip1(int entity, int &clip = -1, bool store = false)
+{
+	clip = -1;
+	
+	static Handle trie_ammo = INVALID_HANDLE;
+	
+	if (trie_ammo == INVALID_HANDLE)trie_ammo = CreateTrie();
+	
+	if (entity <= MaxClients || !IsValidEntity(entity) || !HasEntProp(entity, Prop_Send, "m_iClip1"))return false;
+	
+	char clsname[30];
+	if (!GetEntityClassname(entity, clsname, sizeof(clsname)))return false;
+	
+	if (store)
+	{
+		SetTrieValue(trie_ammo, clsname, GetEntProp(entity, Prop_Send, "m_iClip1"));
+		return true;
+	}
+	
+	if (!GetTrieValue(trie_ammo, clsname, clip))return false;
+	
+	return true;
 }
 /*   Fin.   */
