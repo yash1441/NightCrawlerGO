@@ -278,7 +278,7 @@ public void OnPluginStart()
 	NC_FrostNadeRadius = CreateConVar("nc_frost_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are frozen.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeCount = CreateConVar("nc_napalm_nade_count", "3", "Amount of Napalm Nades.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeRadius = CreateConVar("nc_napalm_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are burnt.", FCVAR_NOTIFY, true, 0.0);
-	NC_AmmoMode = CreateConVar("nc_ammo_mode", "1", "0 = Limited, 1 = Restock ammo on reload, 2 = Restock ammo only on kill", FCVAR_NOTIFY, true, 0.0, true, 2.0);
+	NC_AmmoMode = CreateConVar("nc_ammo_mode", "1", "0 = Limited, 1 = Restock ammo on reload, 2 = Restock ammo only on kill.", FCVAR_NOTIFY, true, 0.0, true, 2.0);
 	
 	NC_HealthshotHealth.AddChangeHook(OnConVarChanged);
 	
@@ -1589,7 +1589,7 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 			case 6:
 			{
 				NC_Adrenaline[client] = NC_AdrenalineCount.IntValue;
-				CPrintToChat(client, "%s {default}Got {green}%ix Adrenaline{default} shots! Use them to run faster for some time.", NC_Tag, NC_AdrenalineCount.IntValue);
+				CPrintToChat(client, "%s {default}Got {green}%ix Adrenaline{default} shots! Get unlimited ammo and run faster.", NC_Tag, NC_AdrenalineCount.IntValue);
 				CPrintToChat(client, "%s {default}Press {green}F{default} to use your item.", NC_Tag);
 			}
 			case 7:
