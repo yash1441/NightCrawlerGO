@@ -12,7 +12,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.7"
+#define PLUGIN_VERSION "1.8"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -55,6 +55,7 @@ bool NC_TopPlayer[MAXPLAYERS + 1] =  { false, ... };
 
 ConVar NC_Ratio;
 ConVar NC_VisibleDuration;
+ConVar NC_HumanMaxHealth;
 ConVar NC_NightcrawlerHealth;
 ConVar NC_NightcrawlerGravity;
 ConVar NC_NightcrawlerSpeed;
@@ -63,12 +64,11 @@ ConVar NC_TeleportDelay;
 ConVar NC_Lighting;
 ConVar NC_AdrenalineCount;
 ConVar NC_AdrenalineDuration;
+ConVar NC_AdrenalineHealth;
 ConVar NC_AdrenalineSpeed;
 ConVar NC_SuicideDamage;
 ConVar NC_SuicideRadius;
 ConVar NC_SuicideDelay;
-ConVar NC_HealthshotCount;
-ConVar NC_HealthshotHealth;
 ConVar NC_PoisonCount;
 ConVar NC_PoisonInterval;
 ConVar NC_PoisonMaxDamage;
@@ -76,8 +76,10 @@ ConVar NC_TripMineCount;
 ConVar NC_TripMineBlast;
 ConVar NC_FrostNadeCount;
 ConVar NC_FrostNadeRadius;
+ConVar NC_FrostNadeDuration;
 ConVar NC_NapalmNadeCount;
 ConVar NC_NapalmNadeRadius;
+ConVar NC_NapalmNadeDuration;
 ConVar NC_AmmoMode;
 
 char NC_Models[][] = 
@@ -224,6 +226,7 @@ char NC_Sounds[][] =
 	"weapons/g3sg1/g3sg1_slideback.wav", 
 	"weapons/c4/c4_beep1.wav", 
 	"items/nvg_on.wav", 
+	"items/healthshot_success_01.wav", 
 	"weapons/c4/c4_disarm.wav", 
 	"weapons/hegrenade/explode3.wav", 
 	"weapons/hegrenade/explode4.wav", 
@@ -255,20 +258,20 @@ public void OnPluginStart()
 	
 	NC_Ratio = CreateConVar("nc_ratio", "3", "X:1 Ratio of players that are nightcrawlers where X is the number of Humans per 1 NightCrawler.", FCVAR_NOTIFY, true, 1.0);
 	NC_VisibleDuration = CreateConVar("nc_visible_time", "3", "Duration for which NightCrawlers are visible upon taking damage.", FCVAR_NOTIFY, true, 0.0);
+	NC_HumanMaxHealth = CreateConVar("nc_human_max_health", "150", "Max health of a Human.", FCVAR_NOTIFY, true, 0.0);
 	NC_NightcrawlerHealth = CreateConVar("nc_health", "150", "Base health of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_NightcrawlerGravity = CreateConVar("nc_gravity", "0.3", "Base gravity of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_NightcrawlerSpeed = CreateConVar("nc_speed", "1.1", "Base speed of a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_TeleportCount = CreateConVar("nc_teleport_count", "3", "Amount of starting teleports given to a NightCrawler.", FCVAR_NOTIFY, true, 0.0);
 	NC_TeleportDelay = CreateConVar("nc_teleport_count", "2", "Minimum required delay between two consecutive teleports.", FCVAR_NOTIFY, true, 0.0);
-	NC_Lighting = CreateConVar("nc_lighting", "g", "Level of lighting in the map. a = pitch black, z = bright like a star.", FCVAR_NOTIFY);
-	NC_AdrenalineCount = CreateConVar("nc_adrenaline_uses", "3", "Amount of uses of Adrenaline.", FCVAR_NOTIFY, true, 0.0);
+	NC_Lighting = CreateConVar("nc_lighting", "k", "Level of lighting in the map. a = pitch black, z = bright like a star.", FCVAR_NOTIFY);
+	NC_AdrenalineCount = CreateConVar("nc_adrenaline_uses", "3", "Amount of uses of Adrenaline Shot.", FCVAR_NOTIFY, true, 0.0);
 	NC_AdrenalineDuration = CreateConVar("nc_adrenaline_time", "10", "Duration for which Adrenaline lasts.", FCVAR_NOTIFY, true, 0.0);
 	NC_AdrenalineSpeed = CreateConVar("nc_adrenaline_speed", "1.4", "Speed during Adrenaline use.", FCVAR_NOTIFY, true, 0.0);
+	NC_AdrenalineHealth = CreateConVar("nc_adrenaline_health", "100", "Amount of health given by Adrenaline.", FCVAR_NOTIFY, true, 0.0);
 	NC_SuicideDamage = CreateConVar("nc_suicide_damage", "160", "Amount of damage done by Suicide Bomber.", FCVAR_NOTIFY, true, 0.0);
 	NC_SuicideRadius = CreateConVar("nc_suicide_radius", "200", "Distance / Radius from the player in which damage can be taken.", FCVAR_NOTIFY, true, 0.0);
 	NC_SuicideDelay = CreateConVar("nc_suicide_time", "2", "Delay before exploding.", FCVAR_NOTIFY, true, 0.0);
-	NC_HealthshotCount = CreateConVar("nc_healthshot_uses", "3", "Amount of uses of Healthshot.", FCVAR_NOTIFY, true, 0.0);
-	NC_HealthshotHealth = CreateConVar("nc_healthshot_health", "100", "Amount of health given by a healthshot.", FCVAR_NOTIFY, true, 0.0);
 	NC_PoisonCount = CreateConVar("nc_poison_amount", "3", "Number of times a player is affected by poison.", FCVAR_NOTIFY, true, 0.0);
 	NC_PoisonInterval = CreateConVar("nc_poison_interval", "1", "Interval between two consecutive poison hurts.", FCVAR_NOTIFY, true, 0.0);
 	NC_PoisonMaxDamage = CreateConVar("nc_poison_damage", "5", "Maximum damage done by a poison hurt.", FCVAR_NOTIFY, true, 0.0);
@@ -276,11 +279,13 @@ public void OnPluginStart()
 	NC_TripMineBlast = CreateConVar("nc_trip_mine_mode", "1", "0 = Trip Laser, 1 = Trip Mine.", FCVAR_NOTIFY, true, 0.0);
 	NC_FrostNadeCount = CreateConVar("nc_frost_nade_count", "3", "Amount of Frost Nades.", FCVAR_NOTIFY, true, 0.0);
 	NC_FrostNadeRadius = CreateConVar("nc_frost_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are frozen.", FCVAR_NOTIFY, true, 0.0);
+	NC_FrostNadeDuration = CreateConVar("nc_frost_nade_time", "5", "Duration for which NightCrawlers are frozen.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeCount = CreateConVar("nc_napalm_nade_count", "3", "Amount of Napalm Nades.", FCVAR_NOTIFY, true, 0.0);
 	NC_NapalmNadeRadius = CreateConVar("nc_napalm_nade_radius", "400", "Distance / Radius from the grenade explosion in which NightCrawlers are burnt.", FCVAR_NOTIFY, true, 0.0);
+	NC_NapalmNadeDuration = CreateConVar("nc_napalm_nade_time", "5", "Duration for which NightCrawlers are burnt.", FCVAR_NOTIFY, true, 0.0);
 	NC_AmmoMode = CreateConVar("nc_ammo_mode", "1", "0 = Limited, 1 = Restock ammo on reload, 2 = Restock ammo only on kill.", FCVAR_NOTIFY, true, 0.0, true, 2.0);
 	
-	NC_HealthshotHealth.AddChangeHook(OnConVarChanged);
+	NC_AdrenalineHealth.AddChangeHook(OnConVarChanged);
 	
 	HookEvent("round_start", Event_OnRoundStart, EventHookMode_Pre);
 	HookEvent("round_end", Event_OnRoundEnd);
@@ -290,6 +295,7 @@ public void OnPluginStart()
 	HookEvent("hegrenade_detonate", Event_OnHeDetonate);
 	HookEvent("decoy_detonate", Event_OnDecoyDetonate);
 	HookEvent("weapon_reload", Event_OnWeaponReload);
+	HookEvent("weapon_fire", Event_OnWeaponFire);
 	
 	AddNormalSoundHook(OnNormalSoundPlayed);
 	
@@ -623,7 +629,7 @@ public Action Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadc
 		int attacker = GetClientOfUserId(event.GetInt("attacker"));
 		if (GetClientTeam(client) != GetClientTeam(attacker))
 		{
-			IgniteEntity(client, 5.0);
+			IgniteEntity(client, NC_NapalmNadeDuration.FloatValue);
 		}
 	}
 	return Plugin_Continue;
@@ -686,7 +692,7 @@ public Action Event_OnDecoyDetonate(Event event, const char[] name, bool dontBro
 			
 			if ((TR_DidHit(trace) && TR_GetEntityIndex(trace) == i) || (GetVectorDistance(origin, targetOrigin) <= 100.0))
 			{
-				Freeze(i, client, 5.0);
+				Freeze(i, client, NC_FrostNadeDuration.FloatValue);
 				CloseHandle(trace);
 			}
 			
@@ -701,7 +707,7 @@ public Action Event_OnDecoyDetonate(Event event, const char[] name, bool dontBro
 				
 				if ((TR_DidHit(trace) && TR_GetEntityIndex(trace) == i) || (GetVectorDistance(origin, targetOrigin) <= NC_FrostNadeRadius.FloatValue - 100.0))
 				{
-					Freeze(i, client, 5.0);
+					Freeze(i, client, NC_FrostNadeDuration.FloatValue);
 				}
 				
 				CloseHandle(trace);
@@ -714,11 +720,11 @@ public Action Event_OnDecoyDetonate(Event event, const char[] name, bool dontBro
 	LightCreate(origin);
 }
 
-public Action Event_OnWeaponReload(Handle event, const char[] name, bool dontBroadcast)
+public Action Event_OnWeaponReload(Event event, const char[] name, bool dontBroadcast)
 {
 	if (NC_AmmoMode.IntValue == 1)
 	{
-		int client = GetClientOfUserId(GetEventInt(event, "userid"));
+		int client = GetClientOfUserId(event.GetInt("userid"));
 		if (!client || !IsClientInGame(client))
 		{
 			return;
@@ -730,6 +736,42 @@ public Action Event_OnWeaponReload(Handle event, const char[] name, bool dontBro
 			GivePlayerAmmo(client, 9999, GetEntProp(weapon, Prop_Data, "m_iPrimaryAmmoType"), true);
 		}
 	}
+}
+
+public Action Event_OnWeaponFire(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	char weapon[32];
+	event.GetString("weapon", weapon, sizeof(weapon));
+	if ((StrEqual(weapon, "weapon_healthshot", false) || StrEqual(weapon, "healthshot", false)))
+	{
+		if (NC_IsAdrenaline[client])
+		{
+			int weaponindex = GetPlayerWeaponSlot(client, CS_SLOT_C4);
+			if (weaponindex != -1)
+			{
+				RemovePlayerItem(client, weaponindex);
+				RemoveEdict(weaponindex);
+				ClientCommand(client, "slot1");
+			}
+			return Plugin_Stop;
+		}
+		else if (GetClientHealth(client) == NC_HumanMaxHealth.IntValue)
+		{
+			return Plugin_Stop;
+		}
+		else
+		{
+			SetEntProp(client, Prop_Send, "m_iDefaultFOV", 110);
+			SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", NC_AdrenalineSpeed.FloatValue);
+			SetEntityHealth(client, (GetClientHealth(client) + NC_AdrenalineHealth.IntValue) > NC_HumanMaxHealth.IntValue ? NC_HumanMaxHealth.IntValue : (GetClientHealth(client) + NC_AdrenalineHealth.IntValue));
+			--NC_Adrenaline[client];
+			NC_IsAdrenaline[client] = true;
+			EmitSoundToClientAny(client, "items/healthshot_success_01.wav");
+			CreateTimer(NC_AdrenalineDuration.FloatValue, AdrenalineRush, client);
+		}
+	}
+	return Plugin_Continue;
 }
 
 public Action EventSDK_OnClientThink(int client)
@@ -747,7 +789,8 @@ public Action EventSDK_OnClientThink(int client)
 			{
 				SetEntPropFloat(client, Prop_Data, "m_flLaggedMovementValue", NC_AdrenalineSpeed.FloatValue);
 				int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-				SetEntProp(weapon, Prop_Send, "m_iClip1", 1);
+				if (weapon != -1)
+					SetEntProp(weapon, Prop_Send, "m_iClip1", 1);
 			}
 			if (GetClientTeam(client) == CS_TEAM_CT && !NC_IsAdrenaline[client] && !IsFakeClient(client))
 			{
@@ -780,7 +823,7 @@ public Action EventSDK_OnWeaponCanUse(int client, int weapon)
 
 public Action EventSDK_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3])
 {
-	if (IsValidClient(attacker) && IsValidClient(victim) && GetClientTeam(victim) == CS_TEAM_T && GetClientTeam(attacker) == CS_TEAM_CT)
+	if (IsValidClient(attacker) && IsValidClient(victim) && GetClientTeam(victim) == CS_TEAM_T && GetClientTeam(attacker) == CS_TEAM_CT && !NC_IsFrozen[victim])
 	{
 		if (!NC_IsVisible[victim]) {
 			NC_iTime[victim] = NC_VisibleDuration.FloatValue;
@@ -841,15 +884,7 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 	
 	else if (GetClientTeam(client) == CS_TEAM_CT)
 	{
-		if (NC_Adrenaline[client] && !NC_IsAdrenaline[client])
-		{
-			SetEntProp(client, Prop_Send, "m_iDefaultFOV", 110);
-			SetEntPropFloat(client, Prop_Send, "m_flLaggedMovementValue", NC_AdrenalineSpeed.FloatValue);
-			--NC_Adrenaline[client];
-			NC_IsAdrenaline[client] = true;
-			CreateTimer(NC_AdrenalineDuration.FloatValue, AdrenalineRush, client);
-		}
-		else if (NC_TripMine[client] > 0)
+		if (NC_TripMine[client] > 0)
 		{
 			DoMine(client);
 		}
@@ -858,10 +893,8 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 			float pos[3];
 			GetClientAbsOrigin(client, pos);
 			
-			DataPack data;
-			CreateDataTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, data);
+			CreateTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, client);
 			
-			WritePackCell(data, client);
 			EmitSoundToAllAny("nightcrawler/suicide.mp3", client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 			NC_Suicide[client] = false;
 		}
@@ -1051,6 +1084,16 @@ public Action AdrenalineRush(Handle timer, any client)
 {
 	NC_IsAdrenaline[client] = false;
 	SetEntProp(client, Prop_Send, "m_iDefaultFOV", 90);
+	if (NC_Adrenaline[client] != 0)
+	{
+		int weaponindex = GetPlayerWeaponSlot(client, CS_SLOT_C4);
+		if (weaponindex != -1)
+		{
+			RemovePlayerItem(client, weaponindex);
+			RemoveEdict(weaponindex);
+		}
+		GivePlayerItem(client, "weapon_healthshot");
+	}
 	return Plugin_Handled;
 }
 
@@ -1080,7 +1123,7 @@ public Action PoisonPlayer(Handle timer, any client)
 	return Plugin_Handled;
 }
 
-public Action DoMine(int client)
+public void DoMine(int client)
 {
 	if (IsValidClient(client))
 	{
@@ -1194,16 +1237,17 @@ public void SetupMine(int client, float position[3], float normal2[3])
 	TR_GetEndPosition(beamend, INVALID_HANDLE);
 	
 	int ent_laser = CreateLaser(beamend, position, beam_name, GetClientTeam(client));
+	PrintToChatAll("%i %i", client, ent_laser);
 	
 	HookSingleEntityOutput(ent_laser, "OnTouchedByEntity", MineLaser_OnTouch);
 	SetEntPropEnt(ent_laser, Prop_Data, "m_hOwnerEntity", client);
 	
-	Handle data;
+	DataPack data = new DataPack();
+	data.Reset();
 	CreateDataTimer(1.0, ActivateTimer, data, TIMER_REPEAT);
-	ResetPack(data);
-	WritePackCell(data, 0);
-	WritePackCell(data, ent);
-	WritePackCell(data, ent_laser);
+	data.WriteCell(0);
+	data.WriteCell(ent);
+	data.WriteCell(ent_laser);
 	
 	PlayMineSound(ent, "weapons/g3sg1/g3sg1_slideback.wav");
 	
@@ -1275,21 +1319,49 @@ public int CreateLaser(float start[3], float end[3], char[] name, int team)
 		DispatchKeyValue(ent, "life", "0");
 		DispatchKeyValue(ent, "TouchType", "0");
 		DispatchSpawn(ent);
-		SetEntPropFloat(ent, Prop_Data, "m_fWidth", 1.0);
-		SetEntPropFloat(ent, Prop_Data, "m_fEndWidth", 1.0);
+		SetEntPropFloat(ent, Prop_Data, "m_fWidth", 1.5);
+		SetEntPropFloat(ent, Prop_Data, "m_fEndWidth", 1.5);
 		ActivateEntity(ent);
 		AcceptEntityInput(ent, "TurnOn");
 	}
 	return ent;
 }
 
-public Action ActivateTimer(Handle timer, Handle data)
+public Action ActivateTimer(Handle timer, DataPack data)
 {
-	ResetPack(data);
-	
-	int counter = ReadPackCell(data);
-	int ent = ReadPackCell(data);
-	int ent_laser = ReadPackCell(data);
+	/// IF YOU'RE USING 1.10 SOURCEMOD THEN UNCOMMENT THE BELOW CODE ///
+	data.Reset();
+	//int ent;
+	//int ent_laser;
+	int counter = data.ReadCell();
+	int ent = data.ReadCell();
+	int ent_laser = data.ReadCell();
+	/*if (counter == 0)
+	{
+		ent = data.ReadCell();
+		ent_laser = data.ReadCell();
+	}
+	else if (counter == 1)
+	{
+		data.ReadCell();
+		ent = data.ReadCell();
+		ent_laser = data.ReadCell();
+	}
+	else if (counter == 2)
+	{
+		data.ReadCell();
+		data.ReadCell();
+		ent = data.ReadCell();
+		ent_laser = data.ReadCell();
+	}
+	else
+	{
+		data.ReadCell();
+		data.ReadCell();
+		data.ReadCell();
+		ent = data.ReadCell();
+		ent_laser = data.ReadCell();
+	}*/
 	
 	if (!IsValidEntity(ent))
 	{
@@ -1300,16 +1372,14 @@ public Action ActivateTimer(Handle timer, Handle data)
 	{
 		PlayMineSound(ent, "weapons/c4/c4_beep1.wav");
 		counter++;
-		ResetPack(data);
+		ResetPack(data, false);
 		WritePackCell(data, counter);
 	}
 	else
 	{
 		PlayMineSound(ent, "items/nvg_on.wav");
-		
 		DispatchKeyValue(ent_laser, "TouchType", "4");
 		DispatchKeyValue(ent_laser, "renderamt", "220");
-		
 		
 		return Plugin_Stop;
 	}
@@ -1326,38 +1396,34 @@ public void MineBreak(const char[] output, int caller, int activator, float dela
 
 public void CreateExplosionDelayed(float vec[3], int owner)
 {
-	DataPack data;
+	DataPack data = new DataPack();
 	CreateDataTimer(0.1, CreateExplosionDelayedTimer, data);
 	
-	WritePackCell(data, owner);
-	WritePackFloat(data, vec[0]);
-	WritePackFloat(data, vec[1]);
-	WritePackFloat(data, vec[2]);
+	data.WriteCell(owner);
+	data.WriteFloat(vec[0]);
+	data.WriteFloat(vec[1]);
+	data.WriteFloat(vec[2]);
 }
 
 public Action CreateExplosionDelayedTimer(Handle timer, DataPack data)
 {
-	ResetPack(data);
-	int owner = ReadPackCell(data);
+	data.Reset();
+	int owner = data.ReadCell();
 	
 	float vec[3];
-	vec[0] = ReadPackFloat(data);
-	vec[1] = ReadPackFloat(data);
-	vec[2] = ReadPackFloat(data);
+	vec[0] = data.ReadFloat();
+	vec[1] = data.ReadFloat();
+	vec[2] = data.ReadFloat();
 	
 	CreateExplosion(vec, owner);
 	
 	return Plugin_Handled;
 }
 
-public Action CreateDelayedSuicide(Handle timer, DataPack data)
+public Action CreateDelayedSuicide(Handle timer, int owner)
 {
-	ResetPack(data);
-	int owner = ReadPackCell(data);
-	
 	float pos[3];
 	GetClientAbsOrigin(owner, pos);
-	
 	
 	if (IsPlayerAlive(owner))
 	{
@@ -1464,7 +1530,7 @@ public void HumanSettings(int client)
 	SetEntProp(client, Prop_Send, "m_bNightVisionOn", 0);
 	SetEntProp(client, Prop_Send, "m_iDefaultFOV", 90);
 	SetEntData(client, FindSendPropInfo("CCSPlayer", "m_iAccount"), 0);
-	SetEntProp(client, Prop_Data, "m_iMaxHealth", 150);
+	SetEntProp(client, Prop_Data, "m_iMaxHealth", NC_HumanMaxHealth.IntValue);
 	StoreToAddress(GetEntityAddress(client) + NC_SpotRadar, 9, NumberType_Int32);
 	if (!IsFakeClient(client))
 	{
@@ -1530,10 +1596,8 @@ public void ItemMenu(int client)
 	menu.AddItem("4", buffer);
 	menu.AddItem("5", "Poison Scout");
 	menu.AddItem("6", "Suicide Bomber");
-	Format(buffer, sizeof(buffer), "Adrenaline (x%i)", NC_AdrenalineCount.IntValue);
+	Format(buffer, sizeof(buffer), "Adrenaline Shot (x%i)", NC_AdrenalineCount.IntValue);
 	menu.AddItem("7", buffer);
-	Format(buffer, sizeof(buffer), "Healthshot (x%i)", NC_HealthshotCount.IntValue);
-	menu.AddItem("8", buffer);
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
@@ -1589,16 +1653,8 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 			case 6:
 			{
 				NC_Adrenaline[client] = NC_AdrenalineCount.IntValue;
-				CPrintToChat(client, "%s {default}Got {green}%ix Adrenaline{default} shots! Get unlimited ammo and run faster.", NC_Tag, NC_AdrenalineCount.IntValue);
-				CPrintToChat(client, "%s {default}Press {green}F{default} to use your item.", NC_Tag);
-			}
-			case 7:
-			{
-				CPrintToChat(client, "%s {default}Got {green}%ix Healthshot{default}! Heal yourself to survive longer.", NC_Tag, NC_HealthshotCount.IntValue);
-				for (int i = 0; i < NC_HealthshotCount.IntValue; i++)
-				{
-					GivePlayerItem(client, "weapon_healthshot");
-				}
+				CPrintToChat(client, "%s {default}Got {green}%ix Adrenaline Shots{default}! Get unlimited ammo, increased health and run faster.", NC_Tag, NC_AdrenalineCount.IntValue);
+				GivePlayerItem(client, "weapon_healthshot");
 			}
 		}
 	}
@@ -1710,7 +1766,6 @@ public void MapSettings()
 	SetCvarInt("mp_default_team_winner_no_objective", 3);
 	SetCvarInt("weapon_auto_cleanup_time", 5);
 	SetCvarInt("mp_death_drop_gun", 0);
-	SetCvarInt("healthshot_health", NC_HealthshotHealth.IntValue);
 }
 
 public void HookStuff(int client)
