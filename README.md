@@ -1,6 +1,5 @@
 # Status - `Smashing Bugs`
-
-Current Version - 1.7
+Current Version - 1.8
 
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
@@ -17,6 +16,7 @@ NightCrawler Mod for CS:GO
 | CVAR | Input | Description |
 |:--- |:---:|:--- |
 | `nc_ratio` | amount | X:1 Ratio of players that are nightcrawlers where X is the number of Humans per 1 NightCrawler.
+| `nc_human_max_health` | amount | Max health of a Human.
 | `nc_health` | amount | Base health of a NightCrawler.
 | `nc_gravity` | amount | Base gravity of a NightCrawler.
 | `nc_speed` | amount | Base speed of a NightCrawler.
@@ -30,11 +30,10 @@ NightCrawler Mod for CS:GO
 | `nc_adrenaline_uses` | amount | Amount of uses of Adrenaline.
 | `nc_adrenaline_time` | seconds | Duration for which Adrenaline lasts.
 | `nc_adrenaline_speed` | speed | Speed during Adrenaline use.
+| `nc_adrenaline_health` | health | Amount of health given by adrenaline shot.
 | `nc_suicide_damage` | damage | Amount of damage done by Suicide Bomber.
 | `nc_suicide_radius` | distance | Distance / Radius from the player in which damage can be taken.
 | `nc_suicide_time` | seconds | Delay before exploding.
-| `nc_healthshot_uses` | amount | Amount of uses of Healthshot.
-| `nc_healthshot_health` | health | Amount of health given by a healthshot.
 | `nc_poison_amount` | amount | Number of times a player is affected by poison.
 | `nc_poison_interval` | seconds | Interval between two consecutive poison hurts.
 | `nc_poison_damage` | damage | Maximum damage done by a poison hurt.
@@ -42,8 +41,10 @@ NightCrawler Mod for CS:GO
 | `nc_trip_mine_mode` | mode | 0 = Trip Laser, 1 = Trip Mine.
 | `nc_frost_nade_count` | amount | Amount of Frost Nades.
 | `nc_frost_nade_radius` | distance | Distance / Radius from the grenade explosion in which NightCrawlers are frozen.
+| `nc_frost_nade_time` | seconds | Duration for which NightCrawlers are frozen.
 | `nc_napalm_nade_count` | amount | Amount of Napalm Nades.
 | `nc_napalm_nade_radius` | distance | Distance / Radius from the grenade explosion in which NightCrawlers are burnt.
+| `nc_napalm_nade_time` | seconds | Duration for which NightCrawlers are burnt.
 | `nc_ammo_mode` | mode | 0 = Limited, 1 = Restock ammo on reload, 2 = Restock ammo only on kill.
 
 
