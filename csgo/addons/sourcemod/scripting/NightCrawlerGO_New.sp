@@ -1237,7 +1237,6 @@ public void SetupMine(int client, float position[3], float normal2[3])
 	TR_GetEndPosition(beamend, INVALID_HANDLE);
 	
 	int ent_laser = CreateLaser(beamend, position, beam_name, GetClientTeam(client));
-	PrintToChatAll("%i %i", client, ent_laser);
 	
 	HookSingleEntityOutput(ent_laser, "OnTouchedByEntity", MineLaser_OnTouch);
 	SetEntPropEnt(ent_laser, Prop_Data, "m_hOwnerEntity", client);
@@ -1372,8 +1371,8 @@ public Action ActivateTimer(Handle timer, DataPack data)
 	{
 		PlayMineSound(ent, "weapons/c4/c4_beep1.wav");
 		counter++;
-		ResetPack(data, false);
-		WritePackCell(data, counter);
+		data.Reset();
+		data.WriteCell(counter);
 	}
 	else
 	{
