@@ -940,11 +940,15 @@ public Action SpawnSettings(Handle timer, any client)
 	return Plugin_Handled;
 }
 
-public Action Hook_SetTransmit(int client, int entity)
+public Action Hook_SetTransmit(int client, int viewer)
 {
 	if (IsValidClient(client, true))
 	{
-		if (client != entity && GetClientTeam(client) != CS_TEAM_SPECTATOR)
+		if(GetClientTeam(viewer) == CS_TEAM_SPECTATOR || !IsPlayerAlive(viewer))
+		{
+			return Plugin_Continue;
+		}
+		if (client != viewer)
 		{
 			return Plugin_Handled;
 		}
