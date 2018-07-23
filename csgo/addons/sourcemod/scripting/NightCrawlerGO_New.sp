@@ -944,7 +944,7 @@ public Action Hook_SetTransmit(int client, int entity)
 {
 	if (IsValidClient(client, true))
 	{
-		if (client != entity)
+		if (client != entity && GetClientTeam(client) != CS_TEAM_SPECTATOR)
 		{
 			return Plugin_Handled;
 		}
