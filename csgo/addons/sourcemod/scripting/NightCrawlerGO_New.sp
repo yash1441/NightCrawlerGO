@@ -113,12 +113,6 @@ char NC_Models[][] =
 	"models/player/custom_player/kuristaja/cso2/helga/helga_arms.mdl", 
 	"models/player/custom_player/kuristaja/cso2/helga/helga_arms.vvd", 
 	"models/player/custom_player/kuristaja/cso2/helga/helga_arms.dx90.vtx", 
-	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.dx90.vtx", 
-	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.mdl", 
-	"models/weapons/ventoz/Abyss_Greatsword/v_abyss_greatsword.vvd", 
-	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.dx90.vtx", 
-	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.mdl", 
-	"models/weapons/ventoz/Abyss_Greatsword/w_abyss_greatsword.vvd", 
 	"models/weapons/eminem/ice_cube/ice_cube.phy", 
 	"models/weapons/eminem/ice_cube/ice_cube.vvd", 
 	"models/weapons/eminem/ice_cube/ice_cube.dx90.vtx", 
@@ -211,11 +205,6 @@ char NC_Materials[][] =
 	"materials/models/player/kuristaja/cso2/helga/ct_helga_eyelashes.vtf", 
 	"materials/models/player/kuristaja/cso2/helga/ct_helga_glove.vmt", 
 	"materials/models/player/kuristaja/cso2/helga/ct_helga_glove.vtf", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_d.vmt", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_d.vtf", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/abyss_greatsword_n.vtf", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/green.vtf", 
-	"materials/models/weapons/ventoz/Abyss_Greatsword/painted_silver_ldr.vtf", 
 	"materials/models/weapons/eminem/ice_cube/ice_cube.vtf", 
 	"materials/models/weapons/eminem/ice_cube/ice_cube_normal.vtf", 
 	"materials/models/weapons/eminem/ice_cube/ice_cube.vmt"
@@ -1575,7 +1564,7 @@ public void WeaponMenu(int client)
 	menu.AddItem("3", "Nova + P250");
 	menu.AddItem("4", "XM1014 + Tec-9");
 	menu.AddItem("5", "UMP-45 + Five-SeveN");
-	menu.AddItem("6", "M249 + Dual Berettas");
+	menu.AddItem("6", "P90 + Dual Berettas");
 	menu.AddItem("7", "AWP + Desert Eagle");
 	menu.Display(client, MENU_TIME_FOREVER);
 }
@@ -1698,7 +1687,7 @@ public int MenuHandler1(Menu menu, MenuAction action, int param1, int param2)
 			}
 			case 5:
 			{
-				GivePlayerItem(param1, "weapon_m249");
+				GivePlayerItem(param1, "weapon_p90");
 				GivePlayerItem(param1, "weapon_elite");
 			}
 			case 6:
