@@ -1458,7 +1458,7 @@ public Action EnableExplosionSound(Handle timer)
 	return Plugin_Handled;
 }
 
-public void ArmsFix_OnModelSafe(int client)
+public void N_ArmsFix_OnClientReady(int client)
 {
 	if (IsValidClient(client))
 	{
@@ -1467,27 +1467,16 @@ public void ArmsFix_OnModelSafe(int client)
 			if (GetRandomInt(0, 1) == 0)
 				SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin3_f.mdl");
 			else SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin2.mdl");
+			
+			N_ArmsFix_SetClientDefaultArms(client);
+			FPVMI_AddViewModelToClient(client, "weapon_knife", NC_KnifeModel);
 		}
 		else if (GetClientTeam(client) == CS_TEAM_CT)
 		{
 			if (NC_TopPlayer[client])
 				SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/helga/helga.mdl");
 			else SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl");
-		}
-	}
-}
-
-public void ArmsFix_OnArmsSafe(int client)
-{
-	if (IsValidClient(client))
-	{
-		if (GetClientTeam(client) == CS_TEAM_T)
-		{
-			ArmsFix_SetDefaultArms(client);
-			FPVMI_AddViewModelToClient(client, "weapon_knife", NC_KnifeModel);
-		}
-		else if (GetClientTeam(client) == CS_TEAM_CT)
-		{
+			
 			FPVMI_RemoveViewModelToClient(client, "weapon_knife");
 			FPVMI_RemoveWorldModelToClient(client, "weapon_knife");
 			if (NC_TopPlayer[client])
