@@ -6,9 +6,13 @@ NightCrawler Mod for CS:GO
 
 # Description
 
-> Nightcrawler mod is a modification for Counter-Strike ~1.6~ GO. In the beginning, a random player is chosen to be a nightcrawler. Nightcrawlers have more speed, less gravity, a custom knife, are invisible, can climb walls, and can teleport. The objective of the nightcrawlers is to kill the humans (CTs).
+> At round start, random player(s) are chosen to be NightCrawlers. NightCrawlers have more speed, less gravity, a custom knife, are invisible, can climb walls, can teleport, etc. The objective of the NightCrawlers is to kill the Humans.
 
-> The humans can choose from any primary and secondary weapons in the game. They also have the opportunity to choose from a variety of different items. Those items include: Laser Sight, Suicide Bomb, Poison Scout Bullets, Adrenaline, and Healthshots. Their objective is to defend themselves by any means possible.
+> The Humans can choose any primary and secondary weapons in the game. They can also choose from a variety of different useful and unique items. These items include - Laser Sight, Suicide Bomb, Poison Scout Bullets, Adrenaline, Healthshots, etc. Their objective is to defend themselves by any means possible.
+
+# Dependencies
+> [First Person View Models Interface](https://forums.alliedmods.net/showthread.php?t=276697)
+> [-N- Arms Fix](https://forums.alliedmods.net/showthread.php?t=293295)
 
 
 # CVARs
