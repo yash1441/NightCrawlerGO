@@ -10,11 +10,10 @@ NightCrawler Mod for CS:GO
 
 > The Humans can choose any primary and secondary weapons in the game. They can also choose from a variety of different useful and unique items. These items include - Laser Sight, Suicide Bomb, Poison Scout Bullets, Adrenaline, Healthshots, etc. Their objective is to defend themselves by any means possible.
 
-# Dependencies
-> [First Person View Models Interface](https://forums.alliedmods.net/showthread.php?t=276697)
-
-> [-N- Arms Fix](https://forums.alliedmods.net/showthread.php?t=293295)
-
+# Includes
+- [overlays.inc](https://github.com/shanapu/overlays.inc)
+- [multicolors.inc](https://github.com/Bara/Multi-Colors/)
+- [emitsoundany.inc](https://forums.alliedmods.net/showthread.php?t=237045)
 
 # CVARs
 
