@@ -22,8 +22,6 @@ Address NC_SpotRadar = view_as<Address>(868);
 #include <overlays>
 #include <multicolors>
 #include <emitsoundany>
-#include <n_arms_fix>
-#include <fpvm_interface>
 
 int NC_TeleCount[MAXPLAYERS + 1];
 bool NC_IsFrozen[MAXPLAYERS + 1] =  { false, ... };
@@ -40,7 +38,6 @@ int NC_GrenadeHaloSprite;
 int NC_GrenadeGlowSprite;
 int NC_GunLaserSprite;
 int NC_GunGlowSprite;
-int NC_KnifeModel;
 
 bool NC_LaserAim[MAXPLAYERS + 1] =  { false, ... };
 int NC_Adrenaline[MAXPLAYERS + 1];
@@ -311,9 +308,7 @@ public void OnMapStart()
 	for (int i = 0; i < sizeof(NC_Models); i++)
 	{
 		AddFileToDownloadsTable(NC_Models[i]);
-		if (StrEqual(NC_Models[i], "models/player/custom_player/xlegend/birkin/birkin_arms.mdl", true))
-			NC_KnifeModel = PrecacheModel("models/player/custom_player/xlegend/birkin/birkin_arms.mdl");
-		else PrecacheModel(NC_Models[i], true);
+		PrecacheModel(NC_Models[i], true);
 	}
 	for (int i = 0; i < sizeof(NC_Materials); i++)
 	{
@@ -442,10 +437,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				CloseHandle(traceRay);
 			}
 			
-			if (!IsNearWall && !IsNearCeiling)
-			{
-				return;
-			}
 			if (IsNearWall || IsNearCeiling)
 			{
 				float velocity[3];
@@ -484,16 +475,19 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 					SetEntityMoveType(client, MOVETYPE_NONE);
 					velocity[0] = velocity[1] = velocity[2] = 0.0;
 				}
-				SetEntityGravity(client, 1.5e-45);
+				SetEntityGravity(client, 0.0000000000000000000000000000000000000000000015);
 				TeleportEntity(client, NULL_VECTOR, NULL_VECTOR, velocity);
 			}
-			else
+			else if (!IsNearWall || !IsNearCeiling)
 			{
+				return Plugin_Continue;
+			} else {
 				SetEntityMoveType(client, MOVETYPE_WALK);
 				SetEntityGravity(client, NC_NightcrawlerGravity.FloatValue);
 			}
 		}
 	}
+	return Plugin_Continue;
 }
 
 public void OnGameFrame()
@@ -528,7 +522,6 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	
 	CPrintToChatAll("%s {default}Ready or not here they come!", NC_Tag);
 	LoopAllClients(client)
 	{
@@ -554,6 +547,8 @@ public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadc
 		id = GetRandomPlayer(CS_TEAM_CT);
 	
 	NC_TopPlayer[id] = true;
+	
+	return Plugin_Continue;
 }
 
 public Action Event_OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
@@ -581,6 +576,8 @@ public Action Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroad
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	CreateTimer(0.1, SpawnSettings, client);
+	
+	return Plugin_Continue;
 }
 
 public Action Event_OnPlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -606,6 +603,7 @@ public Action Event_OnPlayerDeath(Event event, const char[] name, bool dontBroad
 		}
 	}
 	ResetItems(victim);
+	return Plugin_Continue;
 }
 
 public Action Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadcast)
@@ -633,6 +631,8 @@ public Action Event_OnHeDetonate(Event event, const char[] name, bool dontBroadc
 	
 	TE_SetupBeamRingPoint(origin, 10.0, 400.0, NC_GrenadeBeamSprite2, NC_GrenadeHaloSprite, 1, 1, 0.2, 100.0, 1.0, HEColor, 0, 0);
 	TE_SendToAll();
+	
+	return Plugin_Continue;
 }
 
 public Action Event_OnDecoyDetonate(Event event, const char[] name, bool dontBroadcast)
@@ -707,6 +707,8 @@ public Action Event_OnDecoyDetonate(Event event, const char[] name, bool dontBro
 	TE_SetupBeamRingPoint(origin, 10.0, 200.0, NC_GrenadeBeamSprite2, NC_GrenadeHaloSprite, 1, 1, 0.2, 100.0, 1.0, FreezeColor, 0, 0);
 	TE_SendToAll();
 	LightCreate(origin);
+	
+	return Plugin_Continue;
 }
 
 public Action Event_OnWeaponReload(Event event, const char[] name, bool dontBroadcast)
@@ -716,7 +718,7 @@ public Action Event_OnWeaponReload(Event event, const char[] name, bool dontBroa
 		int client = GetClientOfUserId(event.GetInt("userid"));
 		if (!client || !IsClientInGame(client))
 		{
-			return;
+			return Plugin_Continue;
 		}
 		
 		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
@@ -725,6 +727,8 @@ public Action Event_OnWeaponReload(Event event, const char[] name, bool dontBroa
 			GivePlayerAmmo(client, 9999, GetEntProp(weapon, Prop_Data, "m_iPrimaryAmmoType"), true);
 		}
 	}
+	
+	return Plugin_Continue;
 }
 
 public Action Event_OnWeaponFire(Event event, const char[] name, bool dontBroadcast)
@@ -787,6 +791,8 @@ public Action EventSDK_OnClientThink(int client)
 			}
 		}
 	}
+	
+	return Plugin_Continue;
 }
 
 public Action EventSDK_OnWeaponCanUse(int client, int weapon)
@@ -851,16 +857,21 @@ public Action EventSDK_OnPostThinkPost(int client)
 			SetEntProp(client, Prop_Send, "m_iAddonBits", 1);
 		}
 	}
+	
+	return Plugin_Continue;
 }
 
 public Action EventSDK_OnHEGrenadeSpawn(int entity)
 {
 	CreateTimer(0.01, ChangeGrenadeRadius, entity, TIMER_FLAG_NO_MAPCHANGE);
+	return Plugin_Continue;
 }
 
 public Action EventSDK_OnWeaponSpawnPost(int entity)
 {
 	GetMaxClip1(entity, _, true);
+	
+	return Plugin_Continue;
 }
 
 public Action Command_LookAtWeapon(int client, const char[] command, int argc)
@@ -954,6 +965,8 @@ public Action Unfreeze(Handle timer, any client)
 		SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 		NC_IsFrozen[client] = false;
 	}
+	
+	return Plugin_Continue;
 }
 
 public Action UnfreezeModel(Handle timer, any data)
@@ -961,6 +974,8 @@ public Action UnfreezeModel(Handle timer, any data)
 	int ent = EntRefToEntIndex(data);
 	if (ent > 0)
 		AcceptEntityInput(ent, "Kill");
+		
+	return Plugin_Continue;
 }
 
 public Action CreateEvent_DecoyDetonate(Handle timer, any entity)
@@ -996,6 +1011,8 @@ public Action Delete(Handle timer, any entity)
 	{
 		AcceptEntityInput(entity, "kill");
 	}
+	
+	return Plugin_Continue;
 }
 
 public Action Welcome(Handle timer, any client)
@@ -1133,6 +1150,8 @@ public void DoMine(int client)
 public Action ChangeGrenadeRadius(Handle timer, int ent)
 {
 	SetEntPropFloat(ent, Prop_Send, "m_DmgRadius", NC_NapalmNadeRadius.FloatValue);
+	
+	return Plugin_Continue;
 }
 
 public void PlaceMine(int client)
@@ -1422,6 +1441,8 @@ public Action CreateDelayedSuicide(Handle timer, int owner)
 		CreateExplosion(pos, owner);
 		ForcePlayerSuicide(owner);
 	}
+	
+	return Plugin_Continue;
 }
 
 public void CreateExplosion(float vec[3], int owner)
@@ -1458,34 +1479,6 @@ public Action EnableExplosionSound(Handle timer)
 	return Plugin_Handled;
 }
 
-public void N_ArmsFix_OnClientReady(int client)
-{
-	if (IsValidClient(client))
-	{
-		if (GetClientTeam(client) == CS_TEAM_T)
-		{
-			if (GetRandomInt(0, 1) == 0)
-				SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin3_f.mdl");
-			else SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin2.mdl");
-			
-			N_ArmsFix_SetClientDefaultArms(client);
-			FPVMI_AddViewModelToClient(client, "weapon_knife", NC_KnifeModel);
-		}
-		else if (GetClientTeam(client) == CS_TEAM_CT)
-		{
-			if (NC_TopPlayer[client])
-				SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/helga/helga.mdl");
-			else SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl");
-			
-			FPVMI_RemoveViewModelToClient(client, "weapon_knife");
-			FPVMI_RemoveWorldModelToClient(client, "weapon_knife");
-			if (NC_TopPlayer[client])
-				SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/cso2/helga/helga_arms.mdl");
-			else SetEntPropString(client, Prop_Send, "m_szArmsModel", "models/player/custom_player/kuristaja/cso2/gsg9/gsg9_arms.mdl");
-		}
-	}
-}
-
 public void ResetItems(int client)
 {
 	NC_LaserAim[client] = false;
@@ -1501,6 +1494,9 @@ public void ResetItems(int client)
 
 public void HumanSettings(int client)
 {
+	if (NC_TopPlayer[client])
+		SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/helga/helga.mdl");
+	else SetEntityModel(client, "models/player/custom_player/kuristaja/cso2/gsg9/gsg9.mdl");
 	NC_TeleCount[client] = 0;
 	SDKUnhook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	StripWeapons(client);
@@ -1522,6 +1518,9 @@ public void HumanSettings(int client)
 
 public void NCSettings(int client)
 {
+	if (GetRandomInt(0, 1) == 0)
+		SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin3_f.mdl");
+	else SetEntityModel(client, "models/player/custom_player/kodua/re/birkin/birkin2.mdl");
 	NC_TeleCount[client] = NC_TeleportCount.IntValue;
 	SDKHook(client, SDKHook_SetTransmit, Hook_SetTransmit);
 	StripWeapons(client);
@@ -1639,6 +1638,8 @@ public int MenuHandler2(Menu menu, MenuAction action, int param1, int param2)
 			}
 		}
 	}
+	
+	return 1;
 }
 
 public int MenuHandler1(Menu menu, MenuAction action, int param1, int param2)
@@ -1688,6 +1689,8 @@ public int MenuHandler1(Menu menu, MenuAction action, int param1, int param2)
 		
 		ItemMenu(param1);
 	}
+	
+	return 1;
 }
 
 public int TraceClientViewEntity(int client)
@@ -1937,7 +1940,7 @@ public void SetTeleportEndPoint(int client)
 
 public bool TraceEntityFilterPlayer(int entity, int contentsMask)
 {
-	return entity > GetMaxClients() || entity <= 0 || !entity;
+	return entity > MaxClients || entity <= 0 || !entity;
 }
 
 public bool TRDontHitSelf(int entity, int contentsMask, any client)
@@ -2084,7 +2087,7 @@ stock bool IsClientVIP(int client, AdminFlag type)
 
 stock bool IsClientInAir(int client, int flags)
 {
-	return !(flags & FL_ONGROUND || b_ClientWallHang[client]);
+	return !(flags & FL_ONGROUND);
 }
 
 stock bool IsClientNotMoving(int buttons)
@@ -2141,7 +2144,7 @@ stock bool IsClientStuck(float pos[3], int client)
 	GetClientMins(client, mins);
 	GetClientMaxs(client, maxs);
 	
-	for (new i = 0; i < sizeof(mins); i++)
+	for (int i = 0; i < sizeof(mins); i++)
 	{
 		mins[i] -= 3;
 		maxs[i] += 3;
