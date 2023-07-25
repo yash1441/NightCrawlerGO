@@ -12,7 +12,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "1.8"
+#define PLUGIN_VERSION "2.0"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -21,7 +21,6 @@ Address NC_SpotRadar = view_as<Address>(868);
 #include <sdkhooks>
 #include <overlays>
 #include <multicolors>
-#include <emitsoundany>
 
 int NC_TeleCount[MAXPLAYERS + 1];
 bool NC_IsFrozen[MAXPLAYERS + 1] =  { false, ... };
@@ -337,7 +336,7 @@ public void OnMapStart()
 		char TempSound[128];
 		FormatEx(TempSound, sizeof(TempSound), "sound/%s", NC_Sounds[i]);
 		AddFileToDownloadsTable(TempSound);
-		PrecacheSoundAny(NC_Sounds[i], true);
+		PrecacheSound(NC_Sounds[i], true);
 	}
 	
 	int ent;
@@ -760,7 +759,7 @@ public Action Event_OnWeaponFire(Event event, const char[] name, bool dontBroadc
 			SetEntityHealth(client, (GetClientHealth(client) + NC_AdrenalineHealth.IntValue) > NC_HumanMaxHealth.IntValue ? NC_HumanMaxHealth.IntValue : (GetClientHealth(client) + NC_AdrenalineHealth.IntValue));
 			--NC_Adrenaline[client];
 			NC_IsAdrenaline[client] = true;
-			EmitSoundToClientAny(client, "items/healthshot_success_01.wav");
+			EmitSoundToClient(client, "items/healthshot_success_01.wav");
 			CreateTimer(NC_AdrenalineDuration.FloatValue, AdrenalineRush, client);
 		}
 	}
@@ -895,7 +894,7 @@ public Action Command_LookAtWeapon(int client, const char[] command, int argc)
 			
 			CreateTimer(NC_SuicideDelay.FloatValue, CreateDelayedSuicide, client);
 			
-			EmitSoundToAllAny("nightcrawler/suicide.mp3", client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
+			EmitSoundToAll("nightcrawler/suicide.mp3", client, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL);
 			NC_Suicide[client] = false;
 		}
 	}
@@ -1267,7 +1266,7 @@ public void SetupMine(int client, float position[3], float normal2[3])
 
 public void PlayMineSound(int entity, const char[] sound)
 {
-	EmitSoundToAllAny(sound, entity);
+	EmitSoundToAll(sound, entity);
 }
 
 public void MineLaser_OnTouch(const char[] output, int caller, int activator, float delay)
@@ -1464,7 +1463,7 @@ public void CreateExplosion(float vec[3], int owner)
 	if (NC_ExplosionSound)
 	{
 		NC_ExplosionSound = false;
-		EmitAmbientSoundAny(exp_sample, vec, _, SNDLEVEL_GUNFIRE);
+		EmitAmbientSound(exp_sample, vec, _, SNDLEVEL_GUNFIRE);
 		CreateTimer(0.1, EnableExplosionSound);
 	}
 	
@@ -1784,7 +1783,7 @@ public void LightCreate(float pos[3])
 	DispatchKeyValue(iEntity, "style", "1");
 	DispatchKeyValue(iEntity, "_light", "75 75 255 255");
 	DispatchKeyValueFloat(iEntity, "distance", 200.0);
-	EmitSoundToAllAny("nightcrawler/freeze_cam.mp3", iEntity, SNDCHAN_WEAPON);
+	EmitSoundToAll("nightcrawler/freeze_cam.mp3", iEntity, SNDCHAN_WEAPON);
 	CreateTimer(0.2, Delete, iEntity, TIMER_FLAG_NO_MAPCHANGE);
 	DispatchSpawn(iEntity);
 	TeleportEntity(iEntity, pos, NULL_VECTOR, NULL_VECTOR);
@@ -1805,7 +1804,7 @@ public bool Freeze(int client, int attacker, float time)
 	float vec[3];
 	GetClientEyePosition(client, vec);
 	vec[2] -= 50.0;
-	EmitAmbientSoundAny("physics/glass/glass_impact_bullet4.wav", vec, client, SNDLEVEL_RAIDSIREN);
+	EmitAmbientSound("physics/glass/glass_impact_bullet4.wav", vec, client, SNDLEVEL_RAIDSIREN);
 	TE_SetupGlowSprite(vec, NC_GrenadeGlowSprite, time, 2.0, 50);
 	TE_SendToAll();
 	
@@ -1891,7 +1890,7 @@ public void PerformTeleport(int target, float pos[3])
 	{
 		if (IsValidClient(i))
 		{
-			EmitSoundToAllAny("nightcrawler/teleport.mp3", SOUND_FROM_WORLD, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos);
+			EmitSoundToAll("nightcrawler/teleport.mp3", SOUND_FROM_WORLD, SNDCHAN_AUTO, SNDLEVEL_NORMAL, SND_NOFLAGS, SNDVOL_NORMAL, SNDPITCH_NORMAL, -1, pos);
 		}
 	}
 	pos[2] += 40.0;
