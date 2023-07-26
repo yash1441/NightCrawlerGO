@@ -13,7 +13,6 @@ NightCrawler Mod for CS:GO
 # Includes
 - [overlays.inc](https://github.com/shanapu/overlays.inc)
 - [multicolors.inc](https://github.com/Bara/Multi-Colors/)
-- [emitsoundany.inc](https://forums.alliedmods.net/showthread.php?t=237045)
 
 # CVARs
 
