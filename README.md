@@ -1,5 +1,5 @@
 # Status - `Smashing Bugs`
-Current Version - 1.8
+Current Version - 2.0
 
 # NightCrawlerGO
 NightCrawler Mod for CS:GO
