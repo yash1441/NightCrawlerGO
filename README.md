@@ -14,6 +14,9 @@ NightCrawler Mod for CS:GO
 - [overlays.inc](https://github.com/shanapu/overlays.inc)
 - [multicolors.inc](https://github.com/Bara/Multi-Colors/)
 
+# Maps
+- [nc_castle](https://steamcommunity.com/sharedfiles/filedetails/?id=3009059772)
+
 # CVARs
 
 | CVAR | Input | Description |
