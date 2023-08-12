@@ -12,7 +12,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "2.0"
+#define PLUGIN_VERSION "2.2"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -574,7 +574,8 @@ public Action Event_OnRoundEnd(Event event, const char[] name, bool dontBroadcas
 public Action Event_OnPlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	CreateTimer(0.1, SpawnSettings, client);
+	if (!IsClientInGame(client)) return Plugin_Continue;
+	CreateTimer(0.5, SpawnSettings, client);
 	
 	return Plugin_Continue;
 }
@@ -914,7 +915,7 @@ public Action Command_Join(int client, const char[] command, int argc)
 	int NewTeam = StringToInt(arg);
 	int OldTeam = GetClientTeam(client);
 	
-	if ((OldTeam == CS_TEAM_T || OldTeam == CS_TEAM_CT) && NewTeam != CS_TEAM_SPECTATOR)
+	if ((OldTeam == CS_TEAM_T || OldTeam == CS_TEAM_CT) && (NewTeam == CS_TEAM_T || NewTeam == CS_TEAM_CT))
 	{
 		CPrintToChat(client, "%s {default}You can\'t change teams like that.", NC_Tag);
 		return Plugin_Handled;
@@ -936,7 +937,7 @@ public Action SpawnSettings(Handle timer, any client)
 	{
 		HumanSettings(client);
 	}
-	return Plugin_Handled;
+	return Plugin_Continue;
 }
 
 public Action Hook_SetTransmit(int client, int viewer)
@@ -1452,6 +1453,8 @@ public void CreateExplosion(float vec[3], int owner)
 	SetEntProp(ent, Prop_Data, "m_iMagnitude", NC_SuicideDamage.IntValue);
 	SetEntProp(ent, Prop_Data, "m_iRadiusOverride", NC_SuicideRadius.IntValue);
 	SetEntProp(ent, Prop_Send, "m_iTeamNum", CS_TEAM_CT);
+	SetEntProp(ent, Prop_Data, "m_spawnflags", 0);
+	DispatchKeyValue(ent, "spawnflags", "0");
 	
 	DispatchSpawn(ent);
 	ActivateEntity(ent);
@@ -1536,6 +1539,7 @@ public void NCSettings(int client)
 	ShowHudText(client, 1, "Teleports Remaining: %i", NC_TeleCount[client]);
 	if (!IsFakeClient(client))
 	{
+		CPrintToChat(client, "%s {default}Press {red}F{default} to use your {red}%ix Teleports{default}.", NC_Tag, NC_TeleCount[client]);
 		SendConVarValue(client, FindConVar("sv_footsteps"), "0");
 	}
 }
@@ -2059,7 +2063,7 @@ stock int GetRandomPlayer(int team)
 
 stock bool IsValidClient(int client, bool alive = false)
 {
-	if (0 < client && client <= MaxClients && IsClientInGame(client)/*&& IsFakeClient(client) == false*/ && (alive == false || IsPlayerAlive(client)))
+	if (0 < client && client <= MaxClients && IsClientInGame(client) /*&& !IsFakeClient(client) */&& (!alive || IsPlayerAlive(client)))
 	{
 		return true;
 	}
