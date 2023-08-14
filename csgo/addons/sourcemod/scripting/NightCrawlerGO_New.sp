@@ -12,7 +12,7 @@ Address NC_SpotRadar = view_as<Address>(868);
 #define FreezeColor	{75,75,255,255}
 
 #define PLUGIN_AUTHOR "Simon"
-#define PLUGIN_VERSION "2.2"
+#define PLUGIN_VERSION "2.3"
 #define NC_Tag "{green}[NC]"
 
 #include <sourcemod>
@@ -552,7 +552,7 @@ public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadc
 
 public Action Event_OnRoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-	ChangeTeamStuff();
+	if (GetEventInt(event, "winner") != CS_TEAM_T) ChangeTeamStuff();
 	int score = 0;
 	int id = -1;
 	LoopAllClients(client)
@@ -915,7 +915,7 @@ public Action Command_Join(int client, const char[] command, int argc)
 	int NewTeam = StringToInt(arg);
 	int OldTeam = GetClientTeam(client);
 	
-	if ((OldTeam == CS_TEAM_T || OldTeam == CS_TEAM_CT) && (NewTeam == CS_TEAM_T || NewTeam == CS_TEAM_CT))
+	if ((OldTeam == CS_TEAM_CT && NewTeam == CS_TEAM_T) || (OldTeam == CS_TEAM_T && NewTeam == CS_TEAM_CT) || (OldTeam == CS_TEAM_SPECTATOR && NewTeam == CS_TEAM_T))
 	{
 		CPrintToChat(client, "%s {default}You can\'t change teams like that.", NC_Tag);
 		return Plugin_Handled;
