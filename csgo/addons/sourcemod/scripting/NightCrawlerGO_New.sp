@@ -1041,9 +1041,9 @@ public Action CreateBeam(any client)
 	float f_playerViewOrigin[3];
 	GetClientAbsOrigin(client, f_playerViewOrigin);
 	if (GetClientButtons(client) & IN_DUCK)
-		f_playerViewOrigin[2] += 40;
+		f_playerViewOrigin[2] += 30;
 	else
-		f_playerViewOrigin[2] += 60;
+		f_playerViewOrigin[2] += 50;
 	
 	float f_playerViewDestination[3];
 	GetPlayerEye(client, f_playerViewDestination);
