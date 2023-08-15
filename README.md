@@ -17,6 +17,7 @@ NightCrawler Mod for CS:GO
 # Maps
 - [nc_castle](https://steamcommunity.com/sharedfiles/filedetails/?id=3009059772)
 - [nc_tower_b7](https://steamcommunity.com/sharedfiles/filedetails/?id=3016518308)
+- [nc_junkyard](https://steamcommunity.com/sharedfiles/filedetails/?id=3020018048)
 
 # CVARs
 
