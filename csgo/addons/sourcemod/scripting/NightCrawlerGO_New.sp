@@ -544,8 +544,8 @@ public Action Event_OnRoundStart(Event event, const char[] name, bool dontBroadc
 	}
 	if (id == -1)
 		id = GetRandomPlayer(CS_TEAM_CT);
-	
-	NC_TopPlayer[id] = true;
+		
+	if (id != -1)	NC_TopPlayer[id] = true;
 	
 	return Plugin_Continue;
 }
